@@ -12,169 +12,79 @@ import pytest
 
 from datetime import datetime
 
-from docx.opc.coreprops import CoreProperties
+from docx.opc.customprops import CustomProperties
+from docx.oxml.customprops import CT_CustomProperties
 from docx.oxml import parse_xml
-
+from lxml import etree
 
 class DescribeCustomProperties(object):
 
-    def it_knows_the_string_property_values(self, text_prop_get_fixture):
-        core_properties, prop_name, expected_value = text_prop_get_fixture
-        actual_value = getattr(core_properties, prop_name)
-        assert actual_value == expected_value
+    def it_can_read_existing_prop_values(self, prop_get_fixture):
+        custom_properties, prop_name, exp_value = prop_get_fixture
+        actual_value = custom_properties[prop_name]
+        assert actual_value == exp_value
 
-    def it_can_change_the_string_property_values(self, text_prop_set_fixture):
-        core_properties, prop_name, value, expected_xml = text_prop_set_fixture
-        setattr(core_properties, prop_name, value)
-        assert core_properties._element.xml == expected_xml
+    def it_can_change_existing_prop_values(self):
+        pass
 
-    def it_knows_the_date_property_values(self, date_prop_get_fixture):
-        core_properties, prop_name, expected_datetime = date_prop_get_fixture
-        actual_datetime = getattr(core_properties, prop_name)
-        assert actual_datetime == expected_datetime
-
-    def it_can_change_the_date_property_values(self, date_prop_set_fixture):
-        core_properties, prop_name, value, expected_xml = (
-            date_prop_set_fixture
-        )
-        setattr(core_properties, prop_name, value)
-        assert core_properties._element.xml == expected_xml
-
-    def it_knows_the_revision_number(self, revision_get_fixture):
-        core_properties, expected_revision = revision_get_fixture
-        assert core_properties.revision == expected_revision
-
-    def it_can_change_the_revision_number(self, revision_set_fixture):
-        core_properties, revision, expected_xml = revision_set_fixture
-        core_properties.revision = revision
-        assert core_properties._element.xml == expected_xml
+    def it_can_set_new_prop_values(self, prop_set_fixture):
+        custom_properties, prop_name, value, exp_xml = prop_set_fixture
+        custom_properties[prop_name] = value
+        assert custom_properties._element.xml == exp_xml
 
     # fixtures -------------------------------------------------------
 
     @pytest.fixture(params=[
-        ('created',      datetime(2012, 11, 17, 16, 37, 40)),
-        ('last_printed', datetime(2014,  6,  4,  4, 28)),
-        ('modified',     None),
+        ('CustomPropString', 'Test String'),
+        ('CustomPropBool',   True),
+        ('CustomPropInt',    13),
+        ('CustomPropFoo',    None),
     ])
-    def date_prop_get_fixture(self, request, core_properties):
-        prop_name, expected_datetime = request.param
-        return core_properties, prop_name, expected_datetime
-
-    @pytest.fixture(params=[
-        ('created', 'dcterms:created', datetime(2001, 2, 3, 4, 5),
-         '2001-02-03T04:05:00Z', ' xsi:type="dcterms:W3CDTF"'),
-        ('last_printed', 'cp:lastPrinted', datetime(2014, 6, 4, 4),
-         '2014-06-04T04:00:00Z', ''),
-        ('modified', 'dcterms:modified', datetime(2005, 4, 3, 2, 1),
-         '2005-04-03T02:01:00Z', ' xsi:type="dcterms:W3CDTF"'),
-    ])
-    def date_prop_set_fixture(self, request):
-        prop_name, tagname, value, str_val, attrs = request.param
-        coreProperties = self.coreProperties(None, None)
-        core_properties = CoreProperties(parse_xml(coreProperties))
-        expected_xml = self.coreProperties(tagname, str_val, attrs)
-        return core_properties, prop_name, value, expected_xml
-
-    @pytest.fixture(params=[
-        ('42', 42), (None, 0), ('foobar', 0), ('-17', 0), ('32.7', 0)
-    ])
-    def revision_get_fixture(self, request):
-        str_val, expected_revision = request.param
-        tagname = '' if str_val is None else 'cp:revision'
-        coreProperties = self.coreProperties(tagname, str_val)
-        core_properties = CoreProperties(parse_xml(coreProperties))
-        return core_properties, expected_revision
-
-    @pytest.fixture(params=[
-        (42, '42'),
-    ])
-    def revision_set_fixture(self, request):
-        value, str_val = request.param
-        coreProperties = self.coreProperties(None, None)
-        core_properties = CoreProperties(parse_xml(coreProperties))
-        expected_xml = self.coreProperties('cp:revision', str_val)
-        return core_properties, value, expected_xml
-
-    @pytest.fixture(params=[
-        ('author',           'python-docx'),
-        ('category',         ''),
-        ('comments',         ''),
-        ('content_status',   'DRAFT'),
-        ('identifier',       'GXS 10.2.1ab'),
-        ('keywords',         'foo bar baz'),
-        ('language',         'US-EN'),
-        ('last_modified_by', 'Steve Canny'),
-        ('subject',          'Spam'),
-        ('title',            'Word Document'),
-        ('version',          '1.2.88'),
-    ])
-    def text_prop_get_fixture(self, request, core_properties):
+    def prop_get_fixture(self, request, custom_properties_default):
         prop_name, expected_value = request.param
-        return core_properties, prop_name, expected_value
+        return custom_properties_default, prop_name, expected_value
 
     @pytest.fixture(params=[
-        ('author',           'dc:creator',        'scanny'),
-        ('category',         'cp:category',       'silly stories'),
-        ('comments',         'dc:description',    'Bar foo to you'),
-        ('content_status',   'cp:contentStatus',  'FINAL'),
-        ('identifier',       'dc:identifier',     'GT 5.2.xab'),
-        ('keywords',         'cp:keywords',       'dog cat moo'),
-        ('language',         'dc:language',       'GB-EN'),
-        ('last_modified_by', 'cp:lastModifiedBy', 'Billy Bob'),
-        ('subject',          'dc:subject',        'Eggs'),
-        ('title',            'dc:title',          'Dissertation'),
-        ('version',          'cp:version',        '81.2.8'),
+        ('CustomPropString',  'lpwstr',  'Hi there!',  'Hi there!'),
+        ('CustomPropBool',    'bool',    '0',          False),
+        ('CustomPropInt',     'i4',      '5',          5),
     ])
-    def text_prop_set_fixture(self, request):
-        prop_name, tagname, value = request.param
-        coreProperties = self.coreProperties(None, None)
-        core_properties = CoreProperties(parse_xml(coreProperties))
-        expected_xml = self.coreProperties(tagname, value)
-        return core_properties, prop_name, value, expected_xml
+    def prop_set_fixture(self, request, custom_properties_blank):
+        prop_name, str_type, str_value, value = request.param
+        expected_xml = self.customProperties(prop_name, str_type, str_value)
+        return custom_properties_blank, prop_name, value, expected_xml
 
     # fixture components ---------------------------------------------
 
-    def coreProperties(self, tagname, str_val, attrs=''):
+    def customProperties(self, prop_name, str_type, str_value):
         tmpl = (
-            '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/'
-            'package/2006/metadata/core-properties" xmlns:dc="http://purl.or'
-            'g/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype'
-            '/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://'
-            'www.w3.org/2001/XMLSchema-instance">%s</cp:coreProperties>\n'
+            '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" '
+            'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">\n'
+            '  <property name="%s" fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2">\n'
+            '    <vt:%s>%s</vt:%s>\n'
+            '  </property>\n'
+            '</Properties>'
         )
-        if not tagname:
-            child_element = ''
-        elif not str_val:
-            child_element = '\n  <%s%s/>\n' % (tagname, attrs)
-        else:
-            child_element = (
-                '\n  <%s%s>%s</%s>\n' % (tagname, attrs, str_val, tagname)
-            )
-        return tmpl % child_element
+        return tmpl %(prop_name, str_type, str_value, str_type)
 
     @pytest.fixture
-    def core_properties(self):
+    def custom_properties_blank(self):
         element = parse_xml(
-            b'<?xml version=\'1.0\' encoding=\'UTF-8\' standalone=\'yes\'?>'
-            b'\n<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.o'
-            b'rg/package/2006/metadata/core-properties" xmlns:dc="http://pur'
-            b'l.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcm'
-            b'itype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="h'
-            b'ttp://www.w3.org/2001/XMLSchema-instance">\n'
-            b'  <cp:contentStatus>DRAFT</cp:contentStatus>\n'
-            b'  <dc:creator>python-docx</dc:creator>\n'
-            b'  <dcterms:created xsi:type="dcterms:W3CDTF">2012-11-17T11:07:'
-            b'40-05:30</dcterms:created>\n'
-            b'  <dc:description/>\n'
-            b'  <dc:identifier>GXS 10.2.1ab</dc:identifier>\n'
-            b'  <dc:language>US-EN</dc:language>\n'
-            b'  <cp:lastPrinted>2014-06-04T04:28:00Z</cp:lastPrinted>\n'
-            b'  <cp:keywords>foo bar baz</cp:keywords>\n'
-            b'  <cp:lastModifiedBy>Steve Canny</cp:lastModifiedBy>\n'
-            b'  <cp:revision>4</cp:revision>\n'
-            b'  <dc:subject>Spam</dc:subject>\n'
-            b'  <dc:title>Word Document</dc:title>\n'
-            b'  <cp:version>1.2.88</cp:version>\n'
-            b'</cp:coreProperties>\n'
+            '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" '
+            'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">'
+            '</Properties>\n'
         )
-        return CoreProperties(element)
+        return CustomProperties(element)
+
+    @pytest.fixture
+    def custom_properties_default(self):
+        element = parse_xml(
+            b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+            b'<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" '
+            b'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">\n'
+            b'  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2" name="CustomPropBool"><vt:bool>1</vt:bool></property>\n'
+            b'  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="3" name="CustomPropInt"><vt:i4>13</vt:i4></property>\n'
+            b'  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="4" name="CustomPropString"><vt:lpwstr>Test String</vt:lpwstr></property>\n'
+            b'</Properties>\n'
+        )
+        return CustomProperties(element)

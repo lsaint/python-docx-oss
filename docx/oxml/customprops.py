@@ -14,10 +14,11 @@ from datetime import datetime, timedelta
 from lxml import etree
 from .ns import nsdecls, qn
 from .xmlchemy import BaseOxmlElement, ZeroOrOne
+from . import parse_xml
 
 class CT_CustomProperties(BaseOxmlElement):
     """
-    ``<cp:customProperties>`` element, the root element of the Custom Properties
+    ``<Properties>`` element, the root element of the Custom Properties
     part stored as ``/docProps/custom.xml``. String elements are
     limited in length to 255 unicode characters.
     """
@@ -32,7 +33,7 @@ class CT_CustomProperties(BaseOxmlElement):
         Return a new ``<property>`` element
         """
         xml = cls._customProperties_tmpl
-        customProperties = ct_parse_xml(xml)
+        customProperties = parse_xml(xml)
         return customProperties
 
     def _datetime_of_element(self, property_name):
