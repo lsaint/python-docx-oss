@@ -60,7 +60,6 @@ class CustomProperties(object):
                 elm.text = str(1 if value else 0)
             else:
                 elm.text = '%s' % str(value)
-        print(etree.tostring(prop, pretty_print=True))
 
     def __len__( self ):
         return len(self._element)
