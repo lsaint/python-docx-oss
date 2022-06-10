@@ -107,7 +107,7 @@ class DocumentPart(BaseStoryPart):
         try:
             return self.part_related_by(RT.NUMBERING)
         except KeyError:
-            numbering_part = NumberingPart.new()
+            numbering_part = NumberingPart.default(self.package)
             self.relate_to(numbering_part, RT.NUMBERING)
             return numbering_part
 
