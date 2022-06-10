@@ -3,8 +3,9 @@
 """
 |NumberingPart| and closely related objects
 """
-
 from __future__ import absolute_import, division, print_function, unicode_literals
+
+import os
 
 from ..opc.constants import CONTENT_TYPE as CT
 from ..opc.packuri import PackURI
