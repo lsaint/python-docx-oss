@@ -159,10 +159,6 @@ class OpcPackage(object):
         """
         return list(self.iter_parts())
 
-    @parts.setter
-    def parts(self, new_parts: list[Part]):
-        self._parts = new_parts
-
     def relate_to(self, part, reltype):
         """
         Return rId key of relationship to *part*, from the existing
@@ -183,22 +179,14 @@ class OpcPackage(object):
     def rels(self, new_rels: Relationships):
         self._rels = new_rels
 
-    def drop_parts(self, cmp: Callable[[Part], bool]):
+    def drop_rels(self, cmp: Callable[[_Relationship], bool]) -> list[str]:
         """
-        Drop parts by cmp function.
-        """
-        new_parts = []
-        for p in self.parts:
-            None if cmp(p) else new_parts.append(p)
-        self.parts = new_parts
-
-    def drop_rels(self, cmp: Callable[[_Relationship], bool]):
-        """
-        Drop _Relationship by cmp function.
+        Drop _Relationship by cmp function, related parts will be ignored when save.
         """
         rids = [rid for rid, rel in self.rels.items() if cmp(rel)]
         for rid in rids:
             del self.rels[rid]
+        return rids
 
     def save(self, pkg_file):
         """
