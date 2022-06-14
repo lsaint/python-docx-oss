@@ -122,12 +122,12 @@ class DescribeDocumentPart(object):
         self, part_related_by_, relate_to_, NumberingPart_, numbering_part_
     ):
         part_related_by_.side_effect = KeyError
-        NumberingPart_.new.return_value = numbering_part_
+        NumberingPart_.default.return_value = numbering_part_
         document_part = DocumentPart(None, None, None, None)
 
         numbering_part = document_part.numbering_part
 
-        NumberingPart_.new.assert_called_once_with()
+        NumberingPart_.default.assert_called_once_with(None)
         relate_to_.assert_called_once_with(document_part, numbering_part_, RT.NUMBERING)
         assert numbering_part is numbering_part_
 
