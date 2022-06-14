@@ -120,7 +120,7 @@ class MetaOxmlElement(type):
         will raise the TypeError:
             descriptor '__dict__' for 'xxx' objects doesn't apply to a 'yyy' object.
         """
-        cls_dict = dict(cls.__dict__)
+        cls_dict = dict(_OxmlElementBase.__dict__)
         cls_dict.pop("__dict__", None)
         return cls("BaseOxmlElement", (etree.ElementBase,), cls_dict)
 
