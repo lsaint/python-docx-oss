@@ -4,15 +4,16 @@
 Open Packaging Convention (OPC) objects related to package parts.
 """
 
-from __future__ import (
-    absolute_import, division, print_function, unicode_literals
-)
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
+from typing import Callable
+
+from ..oxml import parse_xml
 from .compat import cls_method_fn
 from .oxml import serialize_part_xml
-from ..oxml import parse_xml
 from .packuri import PackURI
-from .rel import Relationships
+from .rel import Relationships, _Relationship
 from .shared import lazyproperty
 
 
@@ -22,6 +23,7 @@ class Part(object):
     intended to be subclassed in client code to implement specific part
     behaviors.
     """
+
     def __init__(self, partname, content_type, blob=None, package=None):
         super(Part, self).__init__()
         self._partname = partname
@@ -73,6 +75,12 @@ class Part(object):
         """
         if self._rel_ref_count(rId) < 2:
             del self.rels[rId]
+
+    def drop_rels(self, cmp: Callable[[_Relationship], bool]) -> list[str]:
+        rids = [rid for rid, rel in self.rels.items() if cmp(rel)]
+        for rid in rids:
+            del self.rels[rid]
+        return rids
 
     @classmethod
     def load(cls, partname, content_type, blob, package):
@@ -127,9 +135,8 @@ class Part(object):
         """
         if is_external:
             return self.rels.get_or_add_ext_rel(reltype, target)
-        else:
-            rel = self.rels.get_or_add(reltype, target)
-            return rel.rId
+        rel = self.rels.get_or_add(reltype, target)
+        return rel.rId
 
     @property
     def related_parts(self):
@@ -160,7 +167,7 @@ class Part(object):
         Return the count of references in this part's XML to the relationship
         identified by *rId*.
         """
-        rIds = self._element.xpath('//@r:id')
+        rIds = self._element.xpath("//@r:id")
         return len([_rId for _rId in rIds if _rId == rId])
 
 
@@ -177,6 +184,7 @@ class PartFactory(object):
     either of these, the class contained in ``PartFactory.default_part_type``
     is used to construct the part, which is by default ``opc.package.Part``.
     """
+
     part_class_selector = None
     part_type_for = {}
     default_part_type = Part
@@ -184,7 +192,7 @@ class PartFactory(object):
     def __new__(cls, partname, content_type, reltype, blob, package):
         PartClass = None
         if cls.part_class_selector is not None:
-            part_class_selector = cls_method_fn(cls, 'part_class_selector')
+            part_class_selector = cls_method_fn(cls, "part_class_selector")
             PartClass = part_class_selector(content_type, reltype)
         if PartClass is None:
             PartClass = cls._part_cls_for(content_type)
@@ -209,10 +217,9 @@ class XmlPart(Part):
     of parsing and reserializing the XML payload and managing relationships
     to other parts.
     """
+
     def __init__(self, partname, content_type, element, package):
-        super(XmlPart, self).__init__(
-            partname, content_type, package=package
-        )
+        super(XmlPart, self).__init__(partname, content_type, package=package)
         self._element = element
 
     @property
