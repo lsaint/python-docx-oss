@@ -19,8 +19,6 @@ class Table(Parented):
     def __init__(self, tbl, parent):
         super(Table, self).__init__(parent)
         self._element = self._tbl = tbl
-        self._cached_cells = []
-        self._update_cache = True
 
     def add_column(self, width):
         """
@@ -33,7 +31,6 @@ class Table(Parented):
         for tr in self._tbl.tr_lst:
             tc = tr.add_tc()
             tc.width = width
-        self._update_cache = True
         return _Column(gridCol, self)
 
     def add_row(self):
@@ -45,7 +42,6 @@ class Table(Parented):
         for gridCol in tbl.tblGrid.gridCol_lst:
             tc = tr.add_tc()
             tc.width = gridCol.w
-        self._update_cache = True
         return _Row(tr, self)
 
     @property
@@ -169,8 +165,6 @@ class Table(Parented):
         If the table contains a span, one or more |_Cell| object references
         are repeated.
         """
-        if not self._update_cache:
-            return self._cached_cells
         col_count = self._column_count
         cells = []
         for tc in self._tbl.iter_tcs():
@@ -181,8 +175,6 @@ class Table(Parented):
                     cells.append(cells[-1])
                 else:
                     cells.append(_Cell(tc, self))
-        self._cached_cells = cells
-        self._update_cache = False
         return cells
 
     @property
