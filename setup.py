@@ -24,18 +24,18 @@ def text_of(relpath):
 version = re.search(r'__version__ = "([^"]+)"', text_of("docx/__init__.py")).group(1)
 
 
-NAME = "python-docx"
+NAME = "py-docx"
 VERSION = version
 DESCRIPTION = "Create and update Microsoft Word .docx files."
-KEYWORDS = "docx office openxml word"
-AUTHOR = "Steve Canny"
-AUTHOR_EMAIL = "python-docx@googlegroups.com"
-URL = "https://github.com/python-openxml/python-docx"
+KEYWORDS = "docx office openxml word python-docx"
+AUTHOR = "Ethan St. Lee"
+AUTHOR_EMAIL = "ethan@ginolegaltech.cn"
+URL = "https://github.com/lsaint/py-docx"
 LICENSE = text_of("LICENSE")
 PACKAGES = find_packages(exclude=["tests", "tests.*"])
 PACKAGE_DATA = {"docx": ["templates/*.xml", "templates/*.docx"]}
 
-INSTALL_REQUIRES = ["lxml>=2.3.2"]
+INSTALL_REQUIRES = ["lxml>=4.9.0"]
 TEST_SUITE = "tests"
 TESTS_REQUIRE = ["behave", "mock", "pyparsing", "pytest"]
 
@@ -45,10 +45,9 @@ CLASSIFIERS = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8"
-    "Programming Language :: Python :: 3.9"
-    "Programming Language :: Python :: 3.10"
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Office/Business :: Office Suites",
     "Topic :: Software Development :: Libraries",
 ]
