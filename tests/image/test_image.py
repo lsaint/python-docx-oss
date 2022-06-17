@@ -17,7 +17,7 @@ from docx.image.tiff import Tiff
 from docx.opc.constants import CONTENT_TYPE as CT
 from docx.shared import Emu, Length
 
-from ..unitutil.file import test_file
+from ..unitutil.file import testfile
 from ..unitutil.mock import (
     ANY,
     class_mock,
@@ -121,7 +121,7 @@ class DescribeImage(object):
         ext, content_type, px_width, px_height, horz_dpi, vert_dpi = (
             characteristics
         )
-        with open(test_file(image_path), 'rb') as stream:
+        with open(testfile(image_path), 'rb') as stream:
             image = Image.from_file(stream)
             assert image.content_type == content_type
             assert image.ext == ext
@@ -154,7 +154,7 @@ class DescribeImage(object):
 
     @pytest.fixture
     def from_filelike_fixture(self, _from_stream_, image_):
-        image_path = test_file('python-icon.png')
+        image_path = testfile('python-icon.png')
         with open(image_path, 'rb') as f:
             blob = f.read()
         image_stream = BytesIO(blob)
@@ -163,7 +163,7 @@ class DescribeImage(object):
     @pytest.fixture
     def from_path_fixture(self, _from_stream_, BytesIO_, stream_, image_):
         filename = 'python-icon.png'
-        image_path = test_file(filename)
+        image_path = testfile(filename)
         with open(image_path, 'rb') as f:
             blob = f.read()
         return image_path, _from_stream_, stream_, blob, filename, image_
@@ -296,7 +296,7 @@ class Describe_ImageHeaderFactory(object):
     ])
     def call_fixture(self, request):
         image_filename, expected_class = request.param
-        image_path = test_file(image_filename)
+        image_path = testfile(image_filename)
         with open(image_path, 'rb') as f:
             blob = f.read()
         image_stream = BytesIO(blob)
