@@ -7,8 +7,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import pytest
 
 from docx.image.image import Image
+from docx.opc.package import OpcPackage
 from docx.opc.packuri import PackURI
-from docx.opc.part import Part
 from docx.opc.rel import Relationships, _Relationship
 from docx.package import ImageParts, Package
 from docx.parts.image import ImagePart
@@ -155,24 +155,24 @@ class DescribeImageParts(object):
         return instance_mock(request, PackURI)
 
 
-class TestPackage:
-    def test_drop_rels(self, part_with_rels):
+class TestOpcPackage:
+    def test_drop_rels(self, package_with_rels):
         def cmp(rel):
             return "2" in rel.reltype
 
-        ret = part_with_rels.drop_rels(cmp)
-        assert len(part_with_rels.rels) == 2
-        assert part_with_rels.rels["rId3"].reltype == "reltype3"
+        ret = package_with_rels.drop_rels(cmp)
+        assert len(package_with_rels.rels) == 2
+        assert package_with_rels.rels["rId3"].reltype == "reltype3"
         assert ret == ["rId2"]
 
     @pytest.fixture
-    def part_with_rels(self, mocker, rels):
+    def package_with_rels(self, mocker, rels):
         mocker.patch(
-            "docx.opc.part.Part.rels",
+            "docx.opc.package.OpcPackage.rels",
             new_callable=mocker.PropertyMock,
             return_value=rels,
         )
-        return Part("null", None)
+        return OpcPackage()
 
     @pytest.fixture
     def rels(self):
