@@ -8,6 +8,8 @@ import pytest
 
 from docx.image.image import Image
 from docx.opc.packuri import PackURI
+from docx.opc.part import Part
+from docx.opc.rel import Relationships, _Relationship
 from docx.package import ImageParts, Package
 from docx.parts.image import ImagePart
 
@@ -16,7 +18,6 @@ from .unitutil.mock import class_mock, instance_mock, method_mock, property_mock
 
 
 class DescribePackage(object):
-
     def it_can_get_or_add_an_image_part_containing_a_specified_image(
         self, image_parts_prop_, image_parts_, image_part_
     ):
@@ -30,7 +31,7 @@ class DescribePackage(object):
         assert image_part is image_part_
 
     def it_gathers_package_image_parts_after_unmarshalling(self):
-        package = Package.open(docx_path('having-images'))
+        package = Package.open(docx_path("having-images"))
         image_parts = package.image_parts
         assert len(image_parts) == 3
         for image_part in image_parts:
@@ -52,7 +53,6 @@ class DescribePackage(object):
 
 
 class DescribeImageParts(object):
-
     def it_can_get_a_matching_image_part(
         self, Image_, image_, _get_by_sha1_, image_part_
     ):
@@ -104,20 +104,19 @@ class DescribeImageParts(object):
 
     @pytest.fixture(params=[((2, 3), 1), ((1, 3), 2), ((1, 2), 3)])
     def next_partname_fixture(self, request):
-
         def image_part_with_partname_(n):
             partname = image_partname(n)
             return instance_mock(request, ImagePart, partname=partname)
 
         def image_partname(n):
-            return PackURI('/word/media/image%d.png' % n)
+            return PackURI("/word/media/image%d.png" % n)
 
         existing_partname_numbers, expected_partname_number = request.param
         image_parts = ImageParts()
         for n in existing_partname_numbers:
             image_part_ = image_part_with_partname_(n)
             image_parts.append(image_part_)
-        ext = 'png'
+        ext = "png"
         expected_image_partname = image_partname(expected_partname_number)
         return image_parts, ext, expected_image_partname
 
@@ -125,15 +124,15 @@ class DescribeImageParts(object):
 
     @pytest.fixture
     def _add_image_part_(self, request):
-        return method_mock(request, ImageParts, '_add_image_part')
+        return method_mock(request, ImageParts, "_add_image_part")
 
     @pytest.fixture
     def _get_by_sha1_(self, request):
-        return method_mock(request, ImageParts, '_get_by_sha1')
+        return method_mock(request, ImageParts, "_get_by_sha1")
 
     @pytest.fixture
     def Image_(self, request):
-        return class_mock(request, 'docx.package.Image')
+        return class_mock(request, "docx.package.Image")
 
     @pytest.fixture
     def image_(self, request):
@@ -141,7 +140,7 @@ class DescribeImageParts(object):
 
     @pytest.fixture
     def ImagePart_(self, request):
-        return class_mock(request, 'docx.package.ImagePart')
+        return class_mock(request, "docx.package.ImagePart")
 
     @pytest.fixture
     def image_part_(self, request):
@@ -149,8 +148,36 @@ class DescribeImageParts(object):
 
     @pytest.fixture
     def _next_image_partname_(self, request):
-        return method_mock(request, ImageParts, '_next_image_partname')
+        return method_mock(request, ImageParts, "_next_image_partname")
 
     @pytest.fixture
     def partname_(self, request):
         return instance_mock(request, PackURI)
+
+
+class TestPackage:
+    def test_drop_rels(self, part_with_rels):
+        def cmp(rel):
+            return "2" in rel.reltype
+
+        ret = part_with_rels.drop_rels(cmp)
+        assert len(part_with_rels.rels) == 2
+        assert part_with_rels.rels["rId3"].reltype == "reltype3"
+        assert ret == ["rId2"]
+
+    @pytest.fixture
+    def part_with_rels(self, mocker, rels):
+        mocker.patch(
+            "docx.opc.part.Part.rels",
+            new_callable=mocker.PropertyMock,
+            return_value=rels,
+        )
+        return Part("null", None)
+
+    @pytest.fixture
+    def rels(self):
+        rels = Relationships(None)
+        rels["rId1"] = _Relationship("rId1", "reltype1", "target1", "base1")
+        rels["rId2"] = _Relationship("rId2", "reltype2", "target2", "base2")
+        rels["rId3"] = _Relationship("rId3", "reltype3", "target3", "base3")
+        return rels
