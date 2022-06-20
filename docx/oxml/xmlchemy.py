@@ -779,12 +779,12 @@ class _OxmlElementBase(etree.ElementBase):
         """
         return serialize_for_reading(self)
 
-    def xpath(self, xpath_str):
+    def xpath(self, xpath_str, namespaces=nsmap):
         """
         Override of ``lxml`` _Element.xpath() method to provide standard Open
         XML namespace mapping (``nsmap``) in centralized location.
         """
-        return super(BaseOxmlElement, self).xpath(xpath_str, namespaces=nsmap)
+        return super(BaseOxmlElement, self).xpath(xpath_str, namespaces=namespaces)
 
     @property
     def _nsptag(self):
