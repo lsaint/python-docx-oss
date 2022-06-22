@@ -1,13 +1,6 @@
-# encoding: utf-8
-
 """
 Relationship-related objects.
 """
-
-from __future__ import (
-    absolute_import, division, print_function, unicode_literals
-)
-
 from .oxml import CT_Relationships
 
 
@@ -15,6 +8,7 @@ class Relationships(dict):
     """
     Collection object for |_Relationship| instances, having list semantics.
     """
+
     def __init__(self, baseURI):
         super(Relationships, self).__init__()
         self._baseURI = baseURI
@@ -49,9 +43,7 @@ class Relationships(dict):
         rel = self._get_matching(reltype, target_ref, is_external=True)
         if rel is None:
             rId = self._next_rId
-            rel = self.add_relationship(
-                reltype, target_ref, rId, is_external=True
-            )
+            rel = self.add_relationship(reltype, target_ref, rId, is_external=True)
         return rel.rId
 
     def part_with_reltype(self, reltype):
@@ -62,6 +54,15 @@ class Relationships(dict):
         """
         rel = self._get_rel_of_type(reltype)
         return rel.target_part
+
+    def parts_with_reltype(self, reltype):
+        """
+        Return target part of rel with matching *reltype*, raising |KeyError|
+        if not found and |ValueError| if more than one matching relationship
+        is found.
+        """
+        rels = self._get_rel_of_type(reltype, multiple=True)
+        return [rel.target_part for rel in rels]
 
     @property
     def related_parts(self):
@@ -79,9 +80,7 @@ class Relationships(dict):
         """
         rels_elm = CT_Relationships.new()
         for rel in self.values():
-            rels_elm.add_rel(
-                rel.rId, rel.reltype, rel.target_ref, rel.is_external
-            )
+            rels_elm.add_rel(rel.rId, rel.reltype, rel.target_ref, rel.is_external)
         return rels_elm.xml
 
     def _get_matching(self, reltype, target, is_external=False):
@@ -89,6 +88,7 @@ class Relationships(dict):
         Return relationship of matching *reltype*, *target*, and
         *is_external* from collection, or None if not found.
         """
+
         def matches(rel, reltype, target, is_external):
             if rel.reltype != reltype:
                 return False
@@ -104,16 +104,18 @@ class Relationships(dict):
                 return rel
         return None
 
-    def _get_rel_of_type(self, reltype):
+    def _get_rel_of_type(self, reltype, multiple=False):
         """
         Return single relationship of type *reltype* from the collection.
         Raises |KeyError| if no matching relationship is found. Raises
         |ValueError| if more than one matching relationship is found.
         """
         matching = [rel for rel in self.values() if rel.reltype == reltype]
-        if len(matching) == 0:
+        if not matching:
             tmpl = "no relationship of type '%s' in collection"
             raise KeyError(tmpl % reltype)
+        if multiple:
+            return matching
         if len(matching) > 1:
             tmpl = "multiple relationships of type '%s' in collection"
             raise ValueError(tmpl % reltype)
@@ -125,8 +127,8 @@ class Relationships(dict):
         Next available rId in collection, starting from 'rId1' and making use
         of any gaps in numbering, e.g. 'rId2' for rIds ['rId1', 'rId3'].
         """
-        for n in range(1, len(self)+2):
-            rId_candidate = 'rId%d' % n  # like 'rId19'
+        for n in range(1, len(self) + 2):
+            rId_candidate = "rId%d" % n  # like 'rId19'
             if rId_candidate not in self:
                 return rId_candidate
 
@@ -135,6 +137,7 @@ class _Relationship(object):
     """
     Value object for relationship to part.
     """
+
     def __init__(self, rId, reltype, target, baseURI, external=False):
         super(_Relationship, self).__init__()
         self._rId = rId
@@ -158,8 +161,10 @@ class _Relationship(object):
     @property
     def target_part(self):
         if self._is_external:
-            raise ValueError("target_part property on _Relationship is undef"
-                             "ined when target mode is External")
+            raise ValueError(
+                "target_part property on _Relationship is undef"
+                "ined when target mode is External"
+            )
         return self._target
 
     @property
