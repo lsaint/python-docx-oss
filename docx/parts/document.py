@@ -1,10 +1,9 @@
-"""|DocumentPart| and closely related objects"""
-from lxml.etree import fromstring
-
+"""
+    |DocumentPart| and closely related objects
+"""
 from docx.document import Document
 from docx.opc.constants import CONTENT_TYPE as CT
 from docx.opc.constants import RELATIONSHIP_TYPE as RT
-from docx.opc.packuri import PackURI
 from docx.parts.customxml import CustomXmlPart
 from docx.parts.hdrftr import FooterPart, HeaderPart
 from docx.parts.numbering import NumberingPart
@@ -64,17 +63,12 @@ class DocumentPart(BaseStoryPart):
             return []
 
     def add_custom_xml_part(
-        self, file_name: str, xml: str, content_type: str = CT.XML
+        self, xml: str, file_name: str = "item", content_type: str = CT.XML
     ) -> CustomXmlPart:
         """
         Add a file in /customXml/*file_name*.xml with default content *xml*
         """
-        part = CustomXmlPart(
-            PackURI(f"/customXml/{file_name}.xml"),
-            content_type,
-            fromstring(xml),
-            self.package,
-        )
+        part = CustomXmlPart.default(file_name, content_type, xml, self.package)
         self.rels.get_or_add(RT.CUSTOM_XML, part)
         return part
 
