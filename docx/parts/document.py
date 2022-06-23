@@ -69,8 +69,7 @@ class DocumentPart(BaseStoryPart):
         Add a file in /customXml/*file_name*.xml with default content *xml*
         """
         part = CustomXmlPart.default(file_name, content_type, xml, self.package)
-        self.rels.get_or_add(RT.CUSTOM_XML, part)
-        return part
+        return self.rels.get_or_add(RT.CUSTOM_XML, part).target_part
 
     @property
     def document(self):

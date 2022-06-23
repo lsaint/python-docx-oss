@@ -226,6 +226,10 @@ class XmlPart(Part):
         """
         return self._element
 
+    @element.setter
+    def element(self, e):
+        self._element = e
+
     @classmethod
     def load(cls, partname, content_type, blob, package):
         element = parse_xml(blob)
