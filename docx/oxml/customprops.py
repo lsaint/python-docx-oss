@@ -4,17 +4,17 @@
 lxml custom element classes for core properties-related XML elements.
 """
 
-from __future__ import (
-    absolute_import, division, print_function, unicode_literals
-)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
-
 from datetime import datetime, timedelta
+
 from lxml import etree
+
+from . import parse_xml
 from .ns import nsdecls, qn
 from .xmlchemy import BaseOxmlElement, ZeroOrOne
-from . import parse_xml
+
 
 class CT_CustomProperties(BaseOxmlElement):
     """
@@ -24,7 +24,8 @@ class CT_CustomProperties(BaseOxmlElement):
     """
 
     _customProperties_tmpl = (
-        '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" %s/>\n' % nsdecls('vt')
+        '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" %s/>\n'
+        % nsdecls("vt")
     )
 
     @classmethod
@@ -51,7 +52,7 @@ class CT_CustomProperties(BaseOxmlElement):
         """
         Return element returned by 'get_or_add_' method for *prop_name*.
         """
-        get_or_add_method_name = 'get_or_add_%s' % prop_name
+        get_or_add_method_name = "get_or_add_%s" % prop_name
         get_or_add_method = getattr(self, get_or_add_method_name)
         element = get_or_add_method()
         return element
@@ -65,17 +66,15 @@ class CT_CustomProperties(BaseOxmlElement):
         """
         match = cls._offset_pattern.match(offset_str)
         if match is None:
-            raise ValueError(
-                "'%s' is not a valid offset string" % offset_str
-            )
+            raise ValueError("'%s' is not a valid offset string" % offset_str)
         sign, hours_str, minutes_str = match.groups()
-        sign_factor = -1 if sign == '+' else 1
+        sign_factor = -1 if sign == "+" else 1
         hours = int(hours_str) * sign_factor
         minutes = int(minutes_str) * sign_factor
         td = timedelta(hours=hours, minutes=minutes)
         return dt + td
 
-    _offset_pattern = re.compile('([+-])(\d\d):(\d\d)')
+    _offset_pattern = re.compile(r"([+-])(\d\d):(\d\d)")
 
     @classmethod
     def _parse_W3CDTF_to_datetime(cls, w3cdtf_str):
@@ -86,10 +85,10 @@ class CT_CustomProperties(BaseOxmlElement):
         # UTC timezone e.g. '2003-12-31T10:14:55Z'
         # numeric timezone e.g. '2003-12-31T10:14:55-08:00'
         templates = (
-            '%Y-%m-%dT%H:%M:%S',
-            '%Y-%m-%d',
-            '%Y-%m',
-            '%Y',
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%d",
+            "%Y-%m",
+            "%Y",
         )
         # strptime isn't smart enough to parse literal timezone offsets like
         # '-07:30', so we have to do it ourselves
@@ -113,21 +112,19 @@ class CT_CustomProperties(BaseOxmlElement):
         Set date/time value of child element having *prop_name* to *value*.
         """
         if not isinstance(value, datetime):
-            tmpl = (
-                "property requires <type 'datetime.datetime'> object, got %s"
-            )
+            tmpl = "property requires <type 'datetime.datetime'> object, got %s"
             raise ValueError(tmpl % type(value))
         element = self._get_or_add(prop_name)
-        dt_str = value.strftime('%Y-%m-%dT%H:%M:%SZ')
+        dt_str = value.strftime("%Y-%m-%dT%H:%M:%SZ")
         element.text = dt_str
-        if prop_name in ('created', 'modified'):
+        if prop_name in ("created", "modified"):
             # These two require an explicit 'xsi:type="dcterms:W3CDTF"'
             # attribute. The first and last line are a hack required to add
             # the xsi namespace to the root element rather than each child
             # element in which it is referenced
-            self.set(qn('xsi:foo'), 'bar')
-            element.set(qn('xsi:type'), 'dcterms:W3CDTF')
-            del self.attrib[qn('xsi:foo')]
+            self.set(qn("xsi:foo"), "bar")
+            element.set(qn("xsi:type"), "dcterms:W3CDTF")
+            del self.attrib[qn("xsi:foo")]
 
     def _set_element_text(self, prop_name, value):
         """
@@ -135,9 +132,7 @@ class CT_CustomProperties(BaseOxmlElement):
         """
         value = str(value)
         if len(value) > 255:
-            tmpl = (
-                "exceeded 255 char limit for property, got:\n\n'%s'"
-            )
+            tmpl = "exceeded 255 char limit for property, got:\n\n'%s'"
             raise ValueError(tmpl % value)
         element = self._get_or_add(prop_name)
         element.text = value
@@ -149,8 +144,7 @@ class CT_CustomProperties(BaseOxmlElement):
         """
         element = getattr(self, property_name)
         if element is None:
-            return ''
+            return ""
         if element.text is None:
-            return ''
+            return ""
         return element.text
-

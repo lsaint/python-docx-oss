@@ -4,9 +4,7 @@
 Unit test suite for the docx.opc.parts.customprops module
 """
 
-from __future__ import (
-    absolute_import, division, print_function, unicode_literals
-)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from datetime import datetime, timedelta
 
@@ -20,7 +18,6 @@ from ...unitutil.mock import class_mock, instance_mock
 
 
 class DescribeCustomPropertiesPart(object):
-
     def it_provides_access_to_its_custom_props_object(self, customprops_fixture):
         custom_properties_part, CustomProperties_ = customprops_fixture
         custom_properties = custom_properties_part.custom_properties
@@ -44,7 +41,7 @@ class DescribeCustomPropertiesPart(object):
 
     @pytest.fixture
     def CustomProperties_(self, request):
-        return class_mock(request, 'docx.opc.parts.customprops.CustomProperties')
+        return class_mock(request, "docx.opc.parts.customprops.CustomProperties")
 
     @pytest.fixture
     def element_(self, request):

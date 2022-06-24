@@ -2,8 +2,7 @@
 
 """Unit test suite for docx.opc.part module"""
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import pytest
 
@@ -14,9 +13,16 @@ from docx.opc.rel import Relationships, _Relationship
 from docx.oxml.xmlchemy import BaseOxmlElement
 
 from ..unitutil.cxml import element
-from ..unitutil.mock import (ANY, Mock, class_mock, cls_attr_mock,
-                             function_mock, initializer_mock, instance_mock,
-                             loose_mock)
+from ..unitutil.mock import (
+    ANY,
+    Mock,
+    class_mock,
+    cls_attr_mock,
+    function_mock,
+    initializer_mock,
+    instance_mock,
+    loose_mock,
+)
 
 
 class DescribePart(object):
