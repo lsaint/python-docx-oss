@@ -1,9 +1,4 @@
-# encoding: utf-8
-
 """Objects that implement reading and writing OPC packages."""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from typing import Callable
 
 from docx.opc.constants import RELATIONSHIP_TYPE as RT

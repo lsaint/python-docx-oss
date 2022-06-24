@@ -1,11 +1,10 @@
-# encoding: utf-8
-
-"""|DocumentPart| and closely related objects"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
+"""
+    |DocumentPart| and closely related objects
+"""
 from docx.document import Document
+from docx.opc.constants import CONTENT_TYPE as CT
 from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from docx.parts.customxml import CustomXmlPart
 from docx.parts.hdrftr import FooterPart, HeaderPart
 from docx.parts.numbering import NumberingPart
 from docx.parts.settings import SettingsPart
@@ -51,6 +50,26 @@ class DocumentPart(BaseStoryPart):
         properties of this document.
         """
         return self.package.custom_properties
+
+    @property
+    def custom_xml_parts(self) -> list[CustomXmlPart]:
+        """
+        A |CustomXmlPart| object providing access to the customXml/*.xml
+        for this document.
+        """
+        try:
+            return self.rels.parts_with_reltype(RT.CUSTOM_XML)
+        except KeyError:
+            return []
+
+    def add_custom_xml_part(
+        self, xml: str, file_name: str = "item", content_type: str = CT.XML
+    ) -> CustomXmlPart:
+        """
+        Add a file in /customXml/*file_name*.xml with default content *xml*
+        """
+        part = CustomXmlPart.default(file_name, content_type, xml, self.package)
+        return self.rels.get_or_add(RT.CUSTOM_XML, part).target_part
 
     @property
     def document(self):

@@ -1,20 +1,11 @@
-# encoding: utf-8
-
 """
 Custom properties part, corresponds to ``/docProps/custom.xml`` part in package.
 """
-
-from __future__ import (
-    absolute_import, division, print_function, unicode_literals
-)
-
 from lxml import etree
 
-from datetime import datetime
-
+from ...oxml.customprops import CT_CustomProperties
 from ..constants import CONTENT_TYPE as CT
 from ..customprops import CustomProperties
-from ...oxml.customprops import CT_CustomProperties
 from ..packuri import PackURI
 from ..part import XmlPart
 
@@ -31,9 +22,7 @@ def ct_parse_xml(xml):
     parser is used, so custom element classes are produced for elements in
     *xml* that have them.
     """
-    root_element = etree.fromstring(xml, ct_parser)
-    return root_element
-
+    return etree.fromstring(xml, ct_parser)
 
 
 class CustomPropertiesPart(XmlPart):
@@ -41,6 +30,7 @@ class CustomPropertiesPart(XmlPart):
     Corresponds to part named ``/docProps/custom.xml``, containing the custom
     document properties for this document package.
     """
+
     @classmethod
     def default(cls, package):
         """
@@ -66,9 +56,7 @@ class CustomPropertiesPart(XmlPart):
 
     @classmethod
     def _new(cls, package):
-        partname = PackURI('/docProps/custom.xml')
+        partname = PackURI("/docProps/custom.xml")
         content_type = CT.OPC_CUSTOM_PROPERTIES
         customProperties = CT_CustomProperties.new()
-        return CustomPropertiesPart(
-            partname, content_type, customProperties, package
-        )
+        return CustomPropertiesPart(partname, content_type, customProperties, package)

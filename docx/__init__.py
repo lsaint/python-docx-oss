@@ -1,8 +1,6 @@
-# encoding: utf-8
-
 from docx.api import Document  # noqa
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 
 # register custom Part classes with opc package reader
@@ -12,6 +10,7 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.opc.part import PartFactory
 from docx.opc.parts.coreprops import CorePropertiesPart
 from docx.opc.parts.customprops import CustomPropertiesPart
+from docx.parts.customxml import CustomXmlPart
 from docx.parts.document import DocumentPart
 from docx.parts.hdrftr import FooterPart, HeaderPart
 from docx.parts.image import ImagePart
@@ -23,6 +22,8 @@ from docx.parts.styles import StylesPart
 def part_class_selector(content_type, reltype):
     if reltype == RT.IMAGE:
         return ImagePart
+    elif reltype == RT.CUSTOM_XML:
+        return CustomXmlPart
     return None
 
 

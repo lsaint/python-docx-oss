@@ -1,12 +1,3 @@
-# encoding: utf-8
-
-"""
-Open Packaging Convention (OPC) objects related to package parts.
-"""
-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-
 from typing import Callable
 
 from ..oxml import parse_xml
@@ -17,7 +8,7 @@ from .rel import Relationships, _Relationship
 from .shared import lazyproperty
 
 
-class Part(object):
+class Part:
     """
     Base class for package parts. Provides common properties and methods, but
     intended to be subclassed in client code to implement specific part
@@ -25,7 +16,6 @@ class Part(object):
     """
 
     def __init__(self, partname, content_type, blob=None, package=None):
-        super(Part, self).__init__()
         self._partname = partname
         self._content_type = content_type
         self._blob = blob
@@ -118,6 +108,9 @@ class Part(object):
             tmpl = "partname must be instance of PackURI, got '%s'"
             raise TypeError(tmpl % type(partname).__name__)
         self._partname = partname
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.partname == other.partname
 
     def part_related_by(self, reltype):
         """
@@ -232,6 +225,10 @@ class XmlPart(Part):
         The root XML element of this XML part.
         """
         return self._element
+
+    @element.setter
+    def element(self, e):
+        self._element = e
 
     @classmethod
     def load(cls, partname, content_type, blob, package):

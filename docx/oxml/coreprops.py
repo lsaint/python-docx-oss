@@ -213,10 +213,9 @@ class CT_CoreProperties(BaseOxmlElement):
         """
         Return element returned by 'get_or_add_' method for *prop_name*.
         """
-        get_or_add_method_name = 'get_or_add_%s' % prop_name
+        get_or_add_method_name = f'get_or_add_{prop_name}'
         get_or_add_method = getattr(self, get_or_add_method_name)
-        element = get_or_add_method()
-        return element
+        return get_or_add_method()
 
     @classmethod
     def _offset_dt(cls, dt, offset_str):

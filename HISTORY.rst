@@ -3,6 +3,15 @@
 Release History
 ---------------
 
+0.0.2 (2022-06-24)
++++++++++++++++++++
+
+- Add custom xml support. PR-#10
+- Add Part __eq__.
+- Add Part element setter. 
+- Add Relationships parts_with_reltype.
+
+
 0.0.1 (2022-06-16)
 +++++++++++++++++++
 

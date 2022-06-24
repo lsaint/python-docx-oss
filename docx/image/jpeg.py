@@ -1,12 +1,7 @@
-# encoding: utf-8
-
 """
 Objects related to parsing headers of JPEG image streams, both JFIF and Exif
 sub-formats.
 """
-
-from __future__ import absolute_import, division, print_function
-
 from ..compat import BytesIO
 from .constants import JPEG_MARKER_CODE, MIME_TYPE
 from .helpers import BIG_ENDIAN, StreamReader
@@ -45,7 +40,6 @@ class Exif(Jpeg):
         image in *stream*.
         """
         markers = _JfifMarkers.from_stream(stream)
-        # print('\n%s' % markers)
 
         px_width = markers.sof.px_width
         px_height = markers.sof.px_height
