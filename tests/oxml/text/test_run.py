@@ -41,6 +41,11 @@ class TestCT_R:
         element, ret = itertext_item
         assert "".join(element.itertext()) == ret
 
+    def load_params(self, request):
+        xml, expected_text = request.param
+        ctr = element(xml)
+        return ctr, expected_text
+
     @pytest.fixture(
         params=[
             ('w:r/w:t"foobar"', "foobar"),
@@ -48,9 +53,7 @@ class TestCT_R:
         ]
     )
     def itertext_item(self, request):
-        xml, expected_text = request.param
-        ctr = element(xml)
-        return ctr, expected_text
+        return self.load_params(request)
 
     @pytest.fixture(
         params=[
@@ -59,6 +62,4 @@ class TestCT_R:
         ]
     )
     def texts_item(self, request):
-        xml, expected_text = request.param
-        ctr = element(xml)
-        return ctr, expected_text
+        return self.load_params(request)
