@@ -1,19 +1,15 @@
-# encoding: utf-8
-
 """
 Unit test suite for the docx.opc.rel module
 """
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import pytest
 
 from docx.opc.oxml import CT_Relationships
 from docx.opc.packuri import PackURI
 from docx.opc.part import Part
-from docx.opc.rel import _Relationship, Relationships
+from docx.opc.rel import Relationships, _Relationship
 
-from ..unitutil.mock import call, class_mock, instance_mock, Mock, patch, PropertyMock
+from ..unitutil.mock import (Mock, PropertyMock, call, class_mock,
+                             instance_mock, patch)
 
 
 class Describe_Relationship(object):
@@ -39,6 +35,17 @@ class Describe_Relationship(object):
     def it_should_have_target_ref_for_external_rel(self):
         rel = _Relationship(None, None, "target", None, external=True)
         assert rel.target_ref == "target"
+
+    def it_should_change_target_ref_for_external_rel(self):
+        rel = _Relationship(None, None, "external_target1", None, external=True)
+        new_target = "external_target2"
+        rel.target_ref = new_target
+        assert rel.target_ref == new_target
+
+    def it_raises_on_chaged_internal_rel(self):
+        rel = _Relationship(None, None, "internal_target1", None, external=False)
+        with pytest.raises(ValueError):
+            rel.target_ref = "t2"
 
     def it_should_have_relative_ref_for_internal_rel(self):
         """
@@ -139,7 +146,7 @@ class DescribeRelationships(object):
         return rels, reltype, url
 
     @pytest.fixture
-    def add_matching_ext_rel_fixture_(self, request, reltype, url):
+    def add_matching_ext_rel_fixture_(self, reltype, url):
         rId = "rId369"
         rels = Relationships(None)
         rels.add_relationship(reltype, url, rId, is_external=True)
@@ -203,7 +210,7 @@ class DescribeRelationships(object):
 
     @pytest.fixture
     def rels_with_known_target_part(self, rels, _rel_with_known_target_part):
-        rel, rId, target_part = _rel_with_known_target_part
+        _, rId, target_part = _rel_with_known_target_part
         rels.add_relationship(None, target_part, rId)
         return rels, rId, target_part
 

@@ -173,3 +173,9 @@ class _Relationship(object):
             return self._target
         else:
             return self._target.partname.relative_ref(self._baseURI)
+
+    @target_ref.setter
+    def target_ref(self, ref: str):
+        if not self._is_external:
+            raise ValueError("can not set internal target_ref")
+        self._target = ref
