@@ -1,16 +1,11 @@
-# encoding: utf-8
-
 """
 Run-related proxy objects for python-docx, Run in particular.
 """
-
-from __future__ import absolute_import, print_function, unicode_literals
-
 from ..enum.style import WD_STYLE_TYPE
 from ..enum.text import WD_BREAK
-from .font import Font
 from ..shape import InlineShape
 from ..shared import Parented
+from .font import Font
 
 
 class Run(Parented):
@@ -155,11 +150,11 @@ class Run(Parented):
         ``\\r`` character to a ``<w:cr/>`` element. Any existing run content
         is replaced. Run formatting is preserved.
         """
-        return self._r.text
+        return self._r.texts
 
     @text.setter
     def text(self, text):
-        self._r.text = text
+        self._r.texts = text
 
     @property
     def underline(self):

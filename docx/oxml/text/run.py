@@ -1,9 +1,6 @@
-# encoding: utf-8
-
 """
 Custom element classes related to text runs (CT_R).
 """
-
 from ..ns import qn
 from ..simpletypes import ST_BrClear, ST_BrType
 from ..xmlchemy import BaseOxmlElement, OptionalAttribute, ZeroOrMore, ZeroOrOne
@@ -81,7 +78,7 @@ class CT_R(BaseOxmlElement):
         rPr.style = style
 
     @property
-    def text(self):
+    def texts(self):
         """
         A string representing the textual content of this run, with content
         child elements like ``<w:tab/>`` translated to their Python
@@ -98,8 +95,8 @@ class CT_R(BaseOxmlElement):
                 text += "\n"
         return text
 
-    @text.setter
-    def text(self, text):
+    @texts.setter
+    def texts(self, text):
         self.clear_content()
         _RunContentAppender.append_to_run_from_text(self, text)
 
