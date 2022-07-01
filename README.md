@@ -1,5 +1,4 @@
-
-*python-docx-oss* is a Python library for CRUD Microsoft Word (.docx) files.
+**_python-docx-oss_** is a Python library for CRUD Microsoft Word (.docx) files.
 
 
 <p>
@@ -9,12 +8,14 @@
     <a href="https://github.com/lsaint/python-docx-oss/blob/master/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
 </p>
 
-
-## FAQ
 ---
+
+### FAQ
+
 **Q: What's New?**
 
 **A:** [HISTORY](https://github.com/lsaint/python-docx-oss/blob/master/HISTORY.rst)
 
+---
 
 More information is available in the [python-docx documentation](https://python-docx.readthedocs.org/en/latest/)
