@@ -14,7 +14,7 @@
 
 **Q: What's New?**
 
-**A:** [HISTORY](https://github.com/lsaint/python-docx-oss/blob/master/HISTORY.rst)
+**A:** [HISTORY](https://github.com/lsaint/python-docx-oss/blob/master/HISTORY.md)
 
 ---
 
