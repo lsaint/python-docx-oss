@@ -20,8 +20,8 @@ import sys
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath(".."))
 
+import sphinx_rtd_theme
 from docx import __version__  # noqa
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -51,8 +51,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "python-docx"
-copyright = "2013, Steve Canny"
+project = "python-docx-docx"
+copyright = "2013, Steve Canny, 2022, Ethan St.Lee"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -90,6 +90,8 @@ rst_epilog = """
 .. |_Columns| replace:: :class:`._Columns`
 
 .. |CoreProperties| replace:: :class:`.CoreProperties`
+
+.. |CustomProperties| replace:: :class:`.CustomProperties`
 
 .. |datetime| replace:: :class:`.datetime.datetime`
 
@@ -221,7 +223,7 @@ pygments_style = "sphinx"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "armstrong"
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -229,7 +231,7 @@ html_theme = "armstrong"
 # html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ["_themes"]
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -262,9 +264,7 @@ html_static_path = ["_static"]
 
 # Custom sidebar templates, maps document names to template names.
 # html_sidebars = {}
-html_sidebars = {
-    "**": ["localtoc.html", "relations.html", "sidebarlinks.html", "searchbox.html"]
-}
+html_sidebars = {"**": ["localtoc.html", "relations.html", "sidebarlinks.html", "searchbox.html"]}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -297,7 +297,7 @@ html_sidebars = {
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "python-docxdoc"
+htmlhelp_basename = "python-docx-oss_doc"
 
 
 # -- Options for LaTeX output -----------------------------------------------
