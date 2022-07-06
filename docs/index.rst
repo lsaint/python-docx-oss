@@ -6,7 +6,7 @@
 Welcome to python-docx-oss's documentation!
 ===========================================
 
-Release v\ |version| (:ref:`Installation <install>`)
+Release v\ |release| (:ref:`Installation <install>`)
 
 *python-docx-oss* is a Python library for CRUD Microsoft Word (.docx) files.
 
