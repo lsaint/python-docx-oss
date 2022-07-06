@@ -1,11 +1,14 @@
+.. python-docx-oss documentation master file, created by
+   sphinx-quickstart on Wed Jul  6 15:38:29 2022.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
-python-docx
-===========
+Welcome to python-docx-oss's documentation!
+===========================================
 
 Release v\ |version| (:ref:`Installation <install>`)
 
-*python-docx* is a Python library for creating and updating Microsoft Word
-(.docx) files.
+*python-docx-oss* is a Python library for CRUD Microsoft Word (.docx) files.
 
 
 What it can do
