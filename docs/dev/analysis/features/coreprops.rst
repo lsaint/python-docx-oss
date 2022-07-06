@@ -25,10 +25,10 @@ Candidate Protocol
     >>> document = Document()
     >>> core_properties = document.core_properties
     >>> core_properties.author
-    'python-docx'
-    >>> core_properties.author = 'Brian'
+    'python-docx-oss'
+    >>> core_properties.author = 'lsaint'
     >>> core_properties.author
-    'Brian'
+    'lsaint'
 
 
 Properties

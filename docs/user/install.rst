@@ -3,7 +3,8 @@
 Installing
 ==========
 
-|docx| is hosted on PyPI, so installation is relatively simple, and just
+|docx| is hosted on `PyPI <https://pypi.org/project/python-docx-oss/>`_,
+so installation is relatively simple, and just
 depends on what installation utilities you have installed.
 
 |docx| may be installed with ``pip`` if you have it available::
