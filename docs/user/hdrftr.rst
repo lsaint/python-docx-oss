@@ -80,7 +80,7 @@ A header with multiple "zones" is often accomplished using carefully placed tab 
 
 The required tab-stops for a center and right-aligned "zone" are part of the ``Header``
 and ``Footer`` styles in Word. If you're using a custom template rather than the
-`python-docx` default, it probably makes sense to define that style in your template.
+`python-docx-oss` default, it probably makes sense to define that style in your template.
 
 Inserted tab characters (``"\t"``) are used to separate left, center, and right-aligned
 header content::
