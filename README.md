@@ -18,4 +18,4 @@
 
 ---
 
-More information is available in the [python-docx documentation](https://python-docx.readthedocs.org/en/latest/)
+More information is available in the [python-docx-oss documentation](https://python-docx-oss.readthedocs.io/en/latest/)
