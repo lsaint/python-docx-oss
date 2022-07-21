@@ -18,11 +18,14 @@ class TestCustomXml:
         assert custom_xml_part.items[2].text == "my-text"
         assert custom_xml_part.items[2].attrib["my_attrib"] == "my_attrib_value"
 
+    def test_delete_item(self, custom_xml_part):
+        custom_xml_part.delete_item(custom_xml_part.items[0])
+        assert custom_xml_part.items[0].tag == "bar"
+        assert len(custom_xml_part.items) == 1
+
     @pytest.fixture
     def custom_xml_part(self, mocker, default_xml):
-        return CustomXmlPart.default(
-            "default_file", CT.XML, default_xml, mocker.MagicMock()
-        )
+        return CustomXmlPart.default("default_file", CT.XML, default_xml, mocker.MagicMock())
 
     @pytest.fixture
     def default_xml(self):
