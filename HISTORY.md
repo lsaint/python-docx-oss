@@ -1,6 +1,10 @@
 Release History
 ---------------
 
+**0.0.4 (2022-7-21)**
+
+- public python-docx-oss docs @ readthedocs.
+- add delete_item in CustomXmlPart. #17
 
 
 **0.0.3 (2022-7-01)**

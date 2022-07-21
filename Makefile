@@ -29,7 +29,7 @@ cleandocs:
 	$(MAKE) -C docs clean
 
 coverage:
-	py.test --cov-report term-missing --cov=docx tests/
+	pytest --cov-report term-missing --cov=docx tests/
 
 docs:
 	$(MAKE) -C docs html

@@ -52,7 +52,7 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Libraries",
 ]
 
-LONG_DESCRIPTION = text_of("README.rst") + "\n\n" + text_of("HISTORY.rst")
+LONG_DESCRIPTION = text_of("README.md") + "\n\n" + text_of("HISTORY.md")
 
 ZIP_SAFE = False
 
@@ -62,6 +62,7 @@ params = {
     "description": DESCRIPTION,
     "keywords": KEYWORDS,
     "long_description": LONG_DESCRIPTION,
+    "long_description_content_type": "text/markdown",
     "author": AUTHOR,
     "author_email": AUTHOR_EMAIL,
     "url": URL,
