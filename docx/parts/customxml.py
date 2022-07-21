@@ -59,3 +59,6 @@ class CustomXmlPart(XmlPart):
         Add a child element to root.
         """
         etree.SubElement(self.element, tag, **attrib).text = text
+
+    def delete_item(self, item_element: etree._Element):
+        self.element.remove(item_element)
