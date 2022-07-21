@@ -1,4 +1,4 @@
-.. _custom-xml:
+.. _custom_xml:
 
 Working with customXml
 =======================
@@ -6,9 +6,10 @@ Working with customXml
 As we know, Word documents are .zip files under the hook. 
 Can we add any file in a docx file? Literally yes. 
 After we unzip a docx file, We can add a ``customXml`` folder at the root of it, 
-which contains any XML files. Files in other formats and paths are invalid. 
+which contains any .xml files. 
+Files with other extension and paths are invalid. 
 But it's enough for us to store custom data. 
-It can not be seen or modified in Word like ``CustomProperties``. 
+It can not be seen or modified in Word like :ref:`CustomProperties<custom_properties>`. 
 
 python-docx-oss will create a default XML file in the folder if there are not.
 Then developer can add/delete/modify items in it.
