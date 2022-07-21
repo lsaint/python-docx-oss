@@ -1,4 +1,3 @@
-
 .. _custom_properties:
 
 Working with custom properties
@@ -28,4 +27,4 @@ we can CRUD them via python-docx-oss::
     None
 
 Be careful, users also can see & modify these properties in Word.
-Use :ref:`customXml<custom-xml>` if you need them hidden.
+Use :ref:`customXml<custom_xml>` if you need them hidden.
