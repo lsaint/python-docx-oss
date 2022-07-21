@@ -61,4 +61,7 @@ class CustomXmlPart(XmlPart):
         etree.SubElement(self.element, tag, **attrib).text = text
 
     def delete_item(self, item_element: etree._Element):
+        """
+        Delete a item element. other nodes index may change after deletion.
+        """
         self.element.remove(item_element)
