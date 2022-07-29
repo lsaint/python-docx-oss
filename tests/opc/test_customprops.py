@@ -6,14 +6,14 @@ Unit test suite for the docx.opc.customprops module
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import pytest
-
 from datetime import datetime
 
-from docx.opc.customprops import CustomProperties
-from docx.oxml.customprops import CT_CustomProperties
-from docx.oxml import parse_xml
+import pytest
 from lxml import etree
+
+from docx.opc.customprops import CustomProperties
+from docx.oxml import parse_xml
+from docx.oxml.customprops import CT_CustomProperties
 
 
 class DescribeCustomProperties(object):
@@ -53,12 +53,12 @@ class DescribeCustomProperties(object):
     )
     def prop_set_fixture(self, request, custom_properties_blank):
         prop_name, str_type, str_value, value = request.param
-        expected_xml = self.customProperties(prop_name, str_type, str_value)
+        expected_xml = self.custom_properties(prop_name, str_type, str_value)
         return custom_properties_blank, prop_name, value, expected_xml
 
     # fixture components ---------------------------------------------
 
-    def customProperties(self, prop_name, str_type, str_value):
+    def custom_properties(self, prop_name, str_type, str_value):
         tmpl = (
             '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" '
             'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">\n'

@@ -58,5 +58,5 @@ class CustomPropertiesPart(XmlPart):
     def _new(cls, package):
         partname = PackURI("/docProps/custom.xml")
         content_type = CT.OPC_CUSTOM_PROPERTIES
-        customProperties = CT_CustomProperties.new()
-        return CustomPropertiesPart(partname, content_type, customProperties, package)
+        cp = CT_CustomProperties.new()
+        return CustomPropertiesPart(partname, content_type, cp, package)
