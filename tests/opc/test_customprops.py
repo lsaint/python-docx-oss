@@ -1,19 +1,10 @@
-# encoding: utf-8
-
 """
 Unit test suite for the docx.opc.customprops module
 """
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from datetime import datetime
-
 import pytest
-from lxml import etree
 
 from docx.opc.customprops import CustomProperties
 from docx.oxml import parse_xml
-from docx.oxml.customprops import CT_CustomProperties
 
 
 class DescribeCustomProperties(object):
