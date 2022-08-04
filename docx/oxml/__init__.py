@@ -117,6 +117,7 @@ register_element_cls("w:settings", CT_Settings)
 
 from .shape import CT_GraphicalObject  # noqa
 from .shape import (
+    CT_Anchor,
     CT_Blip,
     CT_BlipFillProperties,
     CT_GraphicalObjectData,
@@ -144,6 +145,7 @@ register_element_cls("pic:spPr", CT_ShapeProperties)
 register_element_cls("wp:docPr", CT_NonVisualDrawingProps)
 register_element_cls("wp:extent", CT_PositiveSize2D)
 register_element_cls("wp:inline", CT_Inline)
+register_element_cls("wp:anchor", CT_Anchor)
 
 from .styles import CT_LatentStyles, CT_LsdException, CT_Style, CT_Styles  # noqa
 
@@ -194,14 +196,7 @@ register_element_cls("w:vAlign", CT_VerticalJc)
 register_element_cls("w:vMerge", CT_VMerge)
 
 from .text.font import CT_Highlight  # noqa
-from .text.font import (
-    CT_Color,
-    CT_Fonts,
-    CT_HpsMeasure,
-    CT_RPr,
-    CT_Underline,
-    CT_VerticalAlignRun,
-)
+from .text.font import CT_Color, CT_Fonts, CT_HpsMeasure, CT_RPr, CT_Underline, CT_VerticalAlignRun
 
 register_element_cls("w:b", CT_OnOff)
 register_element_cls("w:bCs", CT_OnOff)
