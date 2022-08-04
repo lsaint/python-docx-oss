@@ -21,7 +21,7 @@ class CustomProperties:
             if elm.tag == "{%s}i4" % NS_VT:
                 try:
                     return int(elm.text)
-                except Exception:
+                except ValueError:
                     return elm.text
             elif elm.tag == "{%s}bool" % NS_VT:
                 return elm.text == "1"
@@ -38,9 +38,7 @@ class CustomProperties:
                 elmType = "i4"
                 value = str(int(value))
             prop = etree.SubElement(self._element, "property")
-            elm = etree.SubElement(
-                prop, "{%s}%s" % (NS_VT, elmType), nsmap={"vt": NS_VT}
-            )
+            elm = etree.SubElement(prop, "{%s}%s" % (NS_VT, elmType), nsmap={"vt": NS_VT})
             elm.text = value
             prop.set("name", key)
             prop.set("fmtid", "{D5CDD505-2E9C-101B-9397-08002B2CF9AE}")
@@ -58,6 +56,4 @@ class CustomProperties:
         return len(self._element)
 
     def lookup(self, item):
-        return next(
-            (child for child in self._element if child.get("name") == item), None
-        )
+        return next((child for child in self._element if child.get("name") == item), None)

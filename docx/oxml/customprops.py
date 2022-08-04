@@ -1,19 +1,12 @@
-# encoding: utf-8
-
 """
 lxml custom element classes for core properties-related XML elements.
 """
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import re
 from datetime import datetime, timedelta
 
-from lxml import etree
-
 from . import parse_xml
 from .ns import nsdecls, qn
-from .xmlchemy import BaseOxmlElement, ZeroOrOne
+from .xmlchemy import BaseOxmlElement
 
 
 class CT_CustomProperties(BaseOxmlElement):
@@ -34,8 +27,7 @@ class CT_CustomProperties(BaseOxmlElement):
         Return a new ``<property>`` element
         """
         xml = cls._customProperties_tmpl
-        customProperties = parse_xml(xml)
-        return customProperties
+        return parse_xml(xml)
 
     def _datetime_of_element(self, property_name):
         element = getattr(self, property_name)
@@ -52,10 +44,9 @@ class CT_CustomProperties(BaseOxmlElement):
         """
         Return element returned by 'get_or_add_' method for *prop_name*.
         """
-        get_or_add_method_name = "get_or_add_%s" % prop_name
+        get_or_add_method_name = f"get_or_add_{prop_name}"
         get_or_add_method = getattr(self, get_or_add_method_name)
-        element = get_or_add_method()
-        return element
+        return get_or_add_method()
 
     @classmethod
     def _offset_dt(cls, dt, offset_str):
