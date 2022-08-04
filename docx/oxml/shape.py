@@ -78,7 +78,9 @@ class CT_Inline(BaseOxmlElement):
         inline.extent.cy = cy
         inline.docPr.id = shape_id
         inline.docPr.name = "Picture %d" % shape_id
-        inline.graphic.graphicData.uri = "http://schemas.openxmlformats.org/drawingml/2006/picture"
+        inline.graphic.graphicData.uri = (
+            "http://schemas.openxmlformats.org/drawingml/2006/picture"
+        )
         inline.graphic.graphicData._insert_pic(pic)
         return inline
 
@@ -328,7 +330,9 @@ class CT_Anchor(BaseOxmlElement):
         anchor.extent.cy = cy
         anchor.docPr.id = shape_id
         anchor.docPr.name = "Picture %d" % shape_id
-        anchor.graphic.graphicData.uri = "http://schemas.openxmlformats.org/drawingml/2006/picture"
+        anchor.graphic.graphicData.uri = (
+            "http://schemas.openxmlformats.org/drawingml/2006/picture"
+        )
         anchor.graphic.graphicData._insert_pic(pic)
         return anchor
 
