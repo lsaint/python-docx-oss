@@ -67,7 +67,9 @@ class Document(ElementProxy):
         return run.add_picture(image_path_or_stream, width, height)
 
     def add_float_picture(self, image_path_or_stream, width=None, height=None, pos_x=0, pos_y=0):
-        """Add float picture at fixed position `pos_x` and `pos_y` to the top-left point of page."""
+        """
+        Add float picture at fixed position `pos_x` and `pos_y` to the top-left point of page.
+        """
         run = self.add_paragraph().add_run()
         return run.add_float_picture(image_path_or_stream, width, height, pos_x, pos_y)
 
