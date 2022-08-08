@@ -1,15 +1,11 @@
-# encoding: utf-8
-
 """Unit test suite for the docx.document module"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import pytest
 
-from docx.document import _Body, Document
+from docx.document import Document, _Body
 from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_BREAK
 from docx.opc.coreprops import CoreProperties
+from docx.oxml.shape import CT_Anchor
 from docx.parts.document import DocumentPart
 from docx.section import Section, Sections
 from docx.settings import Settings
@@ -21,7 +17,8 @@ from docx.text.paragraph import Paragraph
 from docx.text.run import Run
 
 from .unitutil.cxml import element, xml
-from .unitutil.mock import class_mock, instance_mock, method_mock, property_mock
+from .unitutil.mock import (class_mock, instance_mock, method_mock,
+                            property_mock)
 
 
 class DescribeDocument(object):
@@ -65,6 +62,21 @@ class DescribeDocument(object):
         picture = document.add_picture(path, width, height)
         run_.add_picture.assert_called_once_with(path, width, height)
         assert picture is picture_
+
+    def it_can_add_a_float_picture(self, add_float_picture_fixture):
+        (
+            document,
+            path,
+            width,
+            height,
+            pos_x,
+            pos_y,
+            run_,
+            float_picture_,
+        ) = add_float_picture_fixture
+        anchor = document.add_float_picture(path, width, height, pos_x, pos_y)
+        run_.add_float_picture.assert_called_once_with(path, width, height, pos_x, pos_y)
+        assert  anchor is float_picture_
 
     def it_can_add_a_section(
         self, add_section_fixture, Section_, section_, document_part_
@@ -179,6 +191,14 @@ class DescribeDocument(object):
         add_paragraph_.return_value.add_run.return_value = run_
         run_.add_picture.return_value = picture_
         return document, path, width, height, run_, picture_
+
+    @pytest.fixture
+    def add_float_picture_fixture(self, add_paragraph_, run_, float_picture_):
+        document = Document(None, None)
+        path, width, height, pos_x, pos_y = "foobar.png", 100, 200, 100000, 200000
+        add_paragraph_.return_value.add_run.return_value = run_
+        run_.add_float_picture.return_value = float_picture_
+        return document, path, width, height, pos_x, pos_y, run_, float_picture_
 
     @pytest.fixture(
         params=[
@@ -316,6 +336,10 @@ class DescribeDocument(object):
     @pytest.fixture
     def picture_(self, request):
         return instance_mock(request, InlineShape)
+
+    @pytest.fixture
+    def float_picture_(self, request):
+        return instance_mock(request, CT_Anchor)
 
     @pytest.fixture
     def run_(self, request):

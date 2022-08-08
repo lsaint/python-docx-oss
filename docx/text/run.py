@@ -59,6 +59,12 @@ class Run(Parented):
         self._r.add_drawing(inline)
         return InlineShape(inline)
 
+    def add_float_picture(self, image_path_or_stream, width=None, height=None, pos_x=0, pos_y=0):
+        """Add float picture at fixed position `pos_x` and `pos_y` to the top-left point of page."""
+        anchor = self.part.new_pic_anchor(image_path_or_stream, width, height, pos_x, pos_y)
+        self._r.add_drawing(anchor)
+        return anchor
+
     def add_tab(self):
         """
         Add a ``<w:tab/>`` element at the end of the run, which Word
