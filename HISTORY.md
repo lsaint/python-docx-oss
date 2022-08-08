@@ -1,6 +1,12 @@
 Release History
 ---------------
 
+**0.0.5 (2022-8-08)**
+
+- minor refactor custom-properties
+- add add_float_picture in Document #21
+
+
 **0.0.4 (2022-7-21)**
 
 - public python-docx-oss docs @ readthedocs.
