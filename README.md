@@ -1,5 +1,5 @@
 <p align="center">
-<img src="./docs/_static/img/oss.png" width="400" alt="oss"/>
+<img src="https://raw.githubusercontent.com/lsaint/python-docx-oss/master/docs/_static/img/oss.png" width="400" alt="oss"/>
 </p>
 
 *As a Brazilian jiu-jitsu player, OSS means anything and everything. It’s a term used in BJJ that is a way of greeting and demonstrating respect to others.*
