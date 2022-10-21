@@ -61,7 +61,6 @@ class BaseStoryPart(XmlPart):
         """
         rId, image = self.get_or_add_image(image_descriptor)
         cx, cy = image.scaled_dimensions(width, height)
-        print(width, height, cx, cy)
         shape_id, filename = self.next_id, image.filename
         return CT_Anchor.new_pic_anchor(shape_id, rId, filename, cx, cy, pos_x, pos_y)
 

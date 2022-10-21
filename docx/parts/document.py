@@ -63,7 +63,7 @@ class DocumentPart(BaseStoryPart):
             return []
 
     def add_custom_xml_part(
-        self, xml: str, file_name: str = "item", content_type: str = CT.XML
+        self, xml: str, file_name: str = "item1", content_type: str = CT.XML
     ) -> CustomXmlPart:
         """
         Add a file in /customXml/*file_name*.xml with default content *xml*

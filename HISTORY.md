@@ -1,10 +1,15 @@
 Release History
 ---------------
 
+**0.0.6 (2022-10-21)**
+
+- change default custom xml file name to item1. #23
+
+
 **0.0.5 (2022-8-08)**
 
-- minor refactor custom-properties
-- add add_float_picture in Document #21
+- minor refactor custom-properties.
+- add add_float_picture in Document. #21
 
 
 **0.0.4 (2022-7-21)**
