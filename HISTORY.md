@@ -1,6 +1,11 @@
 Release History
 ---------------
 
+**0.0.6 (2022-10-21)**
+
+- change default custom xml file name to item1.
+
+
 **0.0.5 (2022-8-08)**
 
 - minor refactor custom-properties
