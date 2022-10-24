@@ -4,6 +4,7 @@ from .constants import MIME_TYPE
 from .helpers import LITTLE_ENDIAN, StreamReader
 from .image import BaseImageHeader
 
+
 class Emf(BaseImageHeader):
     """
     Image header parser for EMF images
@@ -23,7 +24,6 @@ class Emf(BaseImageHeader):
         Default filename extension, always 'emf' for EMF images.
         """
         return "emf"
-
 
     @classmethod
     def from_stream(cls, stream):
