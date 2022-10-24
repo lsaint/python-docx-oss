@@ -12,6 +12,7 @@ from docx.image.gif import Gif
 from docx.image.jpeg import Exif, Jfif
 from docx.image.png import Png
 from docx.image.tiff import Tiff
+from docx.image.emf import Emf
 
 
 SIGNATURES = (
@@ -24,4 +25,5 @@ SIGNATURES = (
     (Tiff, 0, b"MM\x00*"),  # big-endian (Motorola) TIFF
     (Tiff, 0, b"II*\x00"),  # little-endian (Intel) TIFF
     (Bmp, 0, b"BM"),
+    (Emf, 0, b"\x01\x00\x00\x00"),
 )
