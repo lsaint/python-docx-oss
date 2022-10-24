@@ -2,8 +2,6 @@
 
 """Unit test suite for docx.image.emf module"""
 
-from __future__ import absolute_import, print_function
-
 import pytest
 
 from docx.compat import BytesIO
