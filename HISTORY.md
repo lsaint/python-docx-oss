@@ -1,6 +1,11 @@
 Release History
 ---------------
 
+**0.0.7 (2022-10-29)**
+
+- add emf image file support. #24
+
+
 **0.0.6 (2022-10-21)**
 
 - change default custom xml file name to item1. #23
