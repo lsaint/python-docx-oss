@@ -26,8 +26,8 @@ version = re.search(r'__version__ = "([^"]+)"', text_of("docx/__init__.py")).gro
 
 NAME = "python-docx-oss"
 VERSION = version
-DESCRIPTION = "Create and update Microsoft Word .docx files."
-KEYWORDS = "docx office openxml word python-docx"
+DESCRIPTION = "CRUD Microsoft Word .docx files."
+KEYWORDS = "docx office openxml word python-docx-oss"
 AUTHOR = "Ethan St. Lee"
 AUTHOR_EMAIL = "ethan@ginolegaltech.cn"
 URL = "https://github.com/lsaint/python-docx-oss"
@@ -40,7 +40,7 @@ TEST_SUITE = "tests"
 TESTS_REQUIRE = ["behave", "mock", "pyparsing", "pytest"]
 
 CLASSIFIERS = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 3 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
