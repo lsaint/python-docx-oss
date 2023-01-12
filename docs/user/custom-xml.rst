@@ -14,6 +14,11 @@ It can not be seen or modified in Word like :ref:`CustomProperties<custom_proper
 python-docx-oss will create a default XML file in the folder if there are not.
 Then developer can add/delete/modify items in it.
 
+WARNING:
+This feature may only work for Microsoft Office Word,
+Some other docx file clients may delete the customXml folder after editing.
+Please use :ref:`CustomProperties<custom_properties>` in this circumstance.
+
 eg::
 
     from docx import Document
