@@ -49,7 +49,7 @@ all if |None| is assigned::
     None
     >>> font.name = 'Arial'
     >>> font.name
-    {'ascii':'Arial', 'hAnsi': 'Arial', 'eastAsia': 'MS Gothic'}
+    {'ascii':'Arial', 'hAnsi': 'Arial', 'eastAsia': 'Arial'}
 
 You can set one or some of name attributes by using *dict* type::
     >>> font.name = {'ascii':'Arial', 'hAnsi': 'Arial', 'eastAsia': 'MS Gothic'}
