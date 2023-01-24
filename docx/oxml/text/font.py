@@ -30,7 +30,7 @@ class CT_Fonts(BaseOxmlElement):
 
     ascii = OptionalAttribute("w:ascii", ST_String)
     hAnsi = OptionalAttribute("w:hAnsi", ST_String)
-    eastAsi = OptionalAttribute("w:eastAsia", ST_String)
+    eastAsia = OptionalAttribute("w:eastAsia", ST_String)
 
 
 class CT_Highlight(BaseOxmlElement):
