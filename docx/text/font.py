@@ -187,11 +187,13 @@ class Font(ElementProxy):
         rPr = self._element.rPr
         if rPr is None:
             return None
-        return {
-            'ascii' : rPr.rFonts_ascii,
-            'hAnsi' : rPr.rFonts_hAnsi,
-            'eastAsia' : rPr.rFonts_eastAsia
-        }
+        if rPr.rFonts_ascii:
+            return rPr.rFonts_ascii
+        if rPr.rFonts_hAnsi:
+            return rPr.rFonts_hAnsi
+        if rPr.rFonts_eastAsia:
+            return rPr.rFonts_eastAsia
+        return None
 
     @name.setter
     def name(self, value):

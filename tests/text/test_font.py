@@ -232,6 +232,8 @@ class DescribeFont(object):
             ("w:r/w:rPr", None),
             ("w:r/w:rPr/w:rFonts", None),
             ("w:r/w:rPr/w:rFonts{w:ascii=Arial}", "Arial"),
+            ("w:r/w:rPr/w:rFonts{w:hAnsi=Arial}", "Arial"),
+            ("w:r/w:rPr/w:rFonts{w:eastAsia=Arial}", "Arial"),
         ]
     )
     def name_get_fixture(self, request):
@@ -254,12 +256,12 @@ class DescribeFont(object):
                 "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
             ),
             (
-                "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:w:eastAsia=Foo}",
+                "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:eastAsia=Foo}",
                 "Bar",
                 "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
             ),
             (
-                "w:r/w:rPr/w:rFonts{w:hAnsi=Foo,w:w:eastAsia=Foo}",
+                "w:r/w:rPr/w:rFonts{w:hAnsi=Foo,w:eastAsia=Foo}",
                 "Bar",
                 "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
             ),
