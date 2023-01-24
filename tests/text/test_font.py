@@ -241,17 +241,27 @@ class DescribeFont(object):
 
     @pytest.fixture(
         params=[
-            ("w:r", "Foo", "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo}"),
-            ("w:r/w:rPr", "Foo", "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo}"),
+            ("w:r", "Foo", "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo,w:eastAsia=Foo}"),
+            ("w:r/w:rPr", "Foo", "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo,w:eastAsia=Foo}"),
             (
                 "w:r/w:rPr/w:rFonts{w:hAnsi=Foo}",
                 "Bar",
-                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar}",
+                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
             ),
             (
                 "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo}",
                 "Bar",
-                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar}",
+                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
+            ),
+            (
+                "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:w:eastAsia=Foo}",
+                "Bar",
+                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
+            ),
+            (
+                "w:r/w:rPr/w:rFonts{w:hAnsi=Foo,w:w:eastAsia=Foo}",
+                "Bar",
+                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
             ),
         ]
     )
