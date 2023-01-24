@@ -228,10 +228,12 @@ class DescribeFont(object):
 
     @pytest.fixture(
         params=[
-            ("w:r", None),
-            ("w:r/w:rPr", None),
-            ("w:r/w:rPr/w:rFonts", None),
-            ("w:r/w:rPr/w:rFonts{w:ascii=Arial}", "Arial"),
+            ("w:r", {'ascii': None, 'hAnsi': None, 'eastAsia': None}),
+            ("w:r/w:rPr", {'ascii': None, 'hAnsi': None, 'eastAsia': None}),
+            ("w:r/w:rPr/w:rFonts", {'ascii': None, 'hAnsi': None, 'eastAsia': None}),
+            ("w:r/w:rPr/w:rFonts{w:ascii=Arial}", {'ascii': "Arial", 'hAnsi': None, 'eastAsia': None}),
+            ("w:r/w:rPr/w:rFonts{w:hAnsi=Arial}", {'ascii': None, 'hAnsi': "Arial", 'eastAsia': None}),
+            ("w:r/w:rPr/w:rFonts{w:eastAsia=Arial}", {'ascii': None, 'hAnsi': None, 'eastAsia': "Arial"}),
         ]
     )
     def name_get_fixture(self, request):
@@ -241,17 +243,27 @@ class DescribeFont(object):
 
     @pytest.fixture(
         params=[
-            ("w:r", "Foo", "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo}"),
-            ("w:r/w:rPr", "Foo", "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo}"),
+            ("w:r", "Foo", "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo,w:eastAsia=Foo}"),
+            ("w:r/w:rPr", "Foo", "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo,w:eastAsia=Foo}"),
             (
                 "w:r/w:rPr/w:rFonts{w:hAnsi=Foo}",
                 "Bar",
-                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar}",
+                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
             ),
             (
                 "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:hAnsi=Foo}",
                 "Bar",
-                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar}",
+                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
+            ),
+            (
+                "w:r/w:rPr/w:rFonts{w:ascii=Foo,w:eastAsia=Foo}",
+                "Bar",
+                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
+            ),
+            (
+                "w:r/w:rPr/w:rFonts{w:hAnsi=Foo,w:eastAsia=Foo}",
+                "Bar",
+                "w:r/w:rPr/w:rFonts{w:ascii=Bar,w:hAnsi=Bar,w:eastAsia=Bar}",
             ),
         ]
     )
