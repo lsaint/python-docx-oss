@@ -228,12 +228,12 @@ class DescribeFont(object):
 
     @pytest.fixture(
         params=[
-            ("w:r", None),
-            ("w:r/w:rPr", None),
-            ("w:r/w:rPr/w:rFonts", None),
-            ("w:r/w:rPr/w:rFonts{w:ascii=Arial}", "Arial"),
-            ("w:r/w:rPr/w:rFonts{w:hAnsi=Arial}", "Arial"),
-            ("w:r/w:rPr/w:rFonts{w:eastAsia=Arial}", "Arial"),
+            ("w:r", {'ascii': None, 'hAnsi': None, 'eastAsia': None}),
+            ("w:r/w:rPr", {'ascii': None, 'hAnsi': None, 'eastAsia': None}),
+            ("w:r/w:rPr/w:rFonts", {'ascii': None, 'hAnsi': None, 'eastAsia': None}),
+            ("w:r/w:rPr/w:rFonts{w:ascii=Arial}", {'ascii': "Arial", 'hAnsi': None, 'eastAsia': None}),
+            ("w:r/w:rPr/w:rFonts{w:hAnsi=Arial}", {'ascii': None, 'hAnsi': "Arial", 'eastAsia': None}),
+            ("w:r/w:rPr/w:rFonts{w:eastAsia=Arial}", {'ascii': None, 'hAnsi': None, 'eastAsia': "Arial"}),
         ]
     )
     def name_get_fixture(self, request):
