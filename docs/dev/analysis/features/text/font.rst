@@ -40,19 +40,21 @@ be used.
 Protocol
 ~~~~~~~~
 
-Initially, only the base typeface name is supported by the API, using the
-:attr:`~.Font.name` property. Its value is the that of the `w:rFonts/@w:ascii`
-attribute or |None| if not present. Assignment to this property sets both the
-`w:ascii` and the `w:hAnsi` attribute to the assigned string or removes them
-both if |None| is assigned::
+Assignment to name property sets all of the
+`w:ascii`, `w:hAnsi`, and the `w:eastAsia` attribute to the assigned string or removes them
+all if |None| is assigned::
 
     >>> font = document.styles['Normal'].font
     >>> font.name
     None
     >>> font.name = 'Arial'
     >>> font.name
-    'Arial'
+    {'ascii':'Arial', 'hAnsi': 'Arial', 'eastAsia': 'MS Gothic'}
 
+You can set one or some of name attributes by using *dict* type::
+    >>> font.name = {'ascii':'Arial', 'hAnsi': 'Arial', 'eastAsia': 'MS Gothic'}
+    >>> font.name
+    {'ascii':'Arial', 'hAnsi': 'Arial', 'eastAsia': 'MS Gothic'}
 
 Boolean run properties
 ----------------------
