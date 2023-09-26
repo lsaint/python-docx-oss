@@ -13,7 +13,7 @@ class Emf(BaseImageHeader):
     @property
     def content_type(self):
         """
-        MIME content type for this image, unconditionally `image/png` for
+        MIME content type for this image, unconditionally `image/emf` for
         EMF images.
         """
         return MIME_TYPE.EMF
