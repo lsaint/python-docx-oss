@@ -1,3 +1,4 @@
+local.txt
 .coverage
 /dist/
 /docs/.build/
