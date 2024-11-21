@@ -2,7 +2,7 @@
 <img src="https://raw.githubusercontent.com/lsaint/python-docx-oss/master/docs/_static/img/oss.png" width="400" alt="oss"/>
 </p>
 
-*As a Brazilian jiu-jitsu player, OSS means anything and everything. It’s a term used in BJJ that is a way of greeting and demonstrating respect to others.*
+*As a Brazilian jiu-jitsu player, OSS means anything and everything. It's a term used in BJJ that is a way of greeting and demonstrating respect to others.*
 
 **_python-docx-oss_** is a Python library for CRUD Microsoft Word (.docx) files. It fork from [python-docx](https://github.com/python-openxml/python-docx).
 
