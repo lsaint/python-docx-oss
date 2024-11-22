@@ -3,6 +3,7 @@
 **0.0.8 (2024-11-22)**
 
 -   EastAsia font support fixes #25
+-   Update README.md #26
 
 **0.0.7 (2022-10-29)**
 
