@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import pathlib
 import re
 
 from setuptools import find_packages, setup
@@ -13,15 +14,13 @@ def text_of(relpath):
     """
     thisdir = os.path.dirname(__file__)
     file_path = os.path.join(thisdir, os.path.normpath(relpath))
-    with open(file_path) as f:
-        text = f.read()
-    return text
+    return pathlib.Path(file_path).read_text()
 
 
 # Read the version from docx.__version__ without importing the package
 # (and thus attempting to import packages it depends on that may not be
 # installed yet)
-version = re.search(r'__version__ = "([^"]+)"', text_of("docx/__init__.py")).group(1)
+version = re.search(r'__version__ = "([^"]+)"', text_of("docx/__init__.py"))[1]
 
 
 NAME = "python-docx-oss"
@@ -40,7 +39,7 @@ TEST_SUITE = "tests"
 TESTS_REQUIRE = ["behave", "mock", "pyparsing", "pytest"]
 
 CLASSIFIERS = [
-    "Development Status :: 3 - Beta",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
