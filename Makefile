@@ -4,7 +4,7 @@ PYTHON = python
 TWINE  = twine
 SETUP  = $(PYTHON) ./setup.py
 
-.PHONY: accept clean coverage docs readme register sdist test upload
+.PHONY: accept clean coverage docs readme register build test upload
 
 help:
 	@echo "Please use \`make <target>' where <target> is one or more of"
@@ -15,7 +15,7 @@ help:
 	@echo "  docs      generate documentation"
 	@echo "  opendocs  open browser to local version of documentation"
 	@echo "  register  update metadata (README.rst) on PyPI"
-	@echo "  sdist     generate a source distribution into dist/"
+	@echo "  build     generate a source distribution into dist/"
 	@echo "  upload    upload distribution tarball to PyPI"
 
 accept:
@@ -40,7 +40,7 @@ opendocs:
 register:
 	$(SETUP) register
 
-sdist:
+build:
 	$(SETUP) sdist
 
 upload:
