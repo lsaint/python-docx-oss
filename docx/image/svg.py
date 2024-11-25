@@ -38,8 +38,26 @@ class Svg(BaseImageHeader):
         stream.seek(0)
         data = stream.read()
         root = ET.fromstring(data)
-        # FIXME: The width could be expressed as '4cm'
-        # See https://www.w3.org/TR/SVG11/struct.html#NewDocument
+        if root.attrib.get("width") is None:
+            return cls._calculate_scaled_dimensions(root.attrib["viewBox"])
+
         width = int(root.attrib["width"])
         height = int(root.attrib["height"])
         return width, height
+
+    @classmethod
+    def _calculate_scaled_dimensions(
+        cls, viewbox: str, base_px: int = 96
+    ) -> tuple[int, int]:
+        _, _, logical_width, logical_height = map(int, viewbox.split())
+
+        aspect_ratio = logical_width / logical_height
+
+        if aspect_ratio >= 1:
+            final_width = base_px
+            final_height = base_px / aspect_ratio
+        else:
+            final_height = base_px
+            final_width = base_px * aspect_ratio
+
+        return int(final_width), int(final_height)
