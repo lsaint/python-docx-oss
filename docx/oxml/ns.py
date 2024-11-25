@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 """
 Namespace-related objects.
 """
@@ -25,9 +23,10 @@ nsmap = {
     "wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing",
     "xml": "http://www.w3.org/XML/1998/namespace",
     "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+    "asvg": "http://schemas.microsoft.com/office/drawing/2016/SVG/main",
 }
 
-pfxmap = dict((value, key) for key, value in nsmap.items())
+pfxmap = {value: key for key, value in nsmap.items()}
 
 
 class NamespacePrefixedTag(str):
@@ -50,7 +49,7 @@ class NamespacePrefixedTag(str):
     @classmethod
     def from_clark_name(cls, clark_name):
         nsuri, local_name = clark_name[1:].split("}")
-        nstag = "%s:%s" % (pfxmap[nsuri], local_name)
+        nstag = f"{pfxmap[nsuri]}:{local_name}"
         return cls(nstag)
 
     @property
@@ -93,7 +92,7 @@ def nsdecls(*prefixes):
     Return a string containing a namespace declaration for each of the
     namespace prefix strings, e.g. 'p', 'ct', passed as *prefixes*.
     """
-    return " ".join(['xmlns:%s="%s"' % (pfx, nsmap[pfx]) for pfx in prefixes])
+    return " ".join([f'xmlns:{pfx}="{nsmap[pfx]}"' for pfx in prefixes])
 
 
 def nspfxmap(*nspfxs):
@@ -102,7 +101,7 @@ def nspfxmap(*nspfxs):
     *nspfxs*. Any number of namespace prefixes can be supplied, e.g.
     namespaces('a', 'r', 'p').
     """
-    return dict((pfx, nsmap[pfx]) for pfx in nspfxs)
+    return {pfx: nsmap[pfx] for pfx in nspfxs}
 
 
 def qn(tag):
