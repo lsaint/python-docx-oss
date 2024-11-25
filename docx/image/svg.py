@@ -47,7 +47,7 @@ class Svg(BaseImageHeader):
 
     @classmethod
     def _calculate_scaled_dimensions(
-        cls, viewbox: str, base_px: int = 96
+        cls, viewbox: str, base_px: int = 72
     ) -> tuple[int, int]:
         _, _, logical_width, logical_height = map(int, viewbox.split())
 
