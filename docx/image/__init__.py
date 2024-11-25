@@ -8,11 +8,12 @@ size, as a required step in including them in a document.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from docx.image.bmp import Bmp
+from docx.image.emf import Emf
 from docx.image.gif import Gif
 from docx.image.jpeg import Exif, Jfif
 from docx.image.png import Png
+from docx.image.svg import Svg
 from docx.image.tiff import Tiff
-from docx.image.emf import Emf
 
 
 SIGNATURES = (
@@ -26,4 +27,6 @@ SIGNATURES = (
     (Tiff, 0, b"II*\x00"),  # little-endian (Intel) TIFF
     (Bmp, 0, b"BM"),
     (Emf, 0, b"\x01\x00\x00\x00"),
+    (Svg, 0, b"<svg "),
+    (Svg, 0, b"<?xml version="),
 )
