@@ -28,7 +28,6 @@ def svg_with_viewbox():
     ]
 )
 def viewbox_data(request):
-    """Fixture for different viewBox test cases as tuples."""
     return request.param
 
 
@@ -39,12 +38,10 @@ def viewbox_data(request):
     ]
 )
 def svg_stream_data(request):
-    """Fixture for SVG stream test cases as tuples."""
     return request.param
 
 
 def test_dimensions_from_stream(svg_stream_data):
-    """Test _dimensions_from_stream with parameterized SVG streams."""
     stream_data, expected_width, expected_height = svg_stream_data
     stream = io.BytesIO(stream_data)
     width, height = Svg._dimensions_from_stream(stream)
@@ -53,7 +50,6 @@ def test_dimensions_from_stream(svg_stream_data):
 
 
 def test_calculate_scaled_dimensions(viewbox_data):
-    """Test _calculate_scaled_dimensions method with parameterized data."""
     viewbox, expected_width, expected_height = viewbox_data
     width, height = Svg._calculate_scaled_dimensions(viewbox)
     assert width == expected_width
