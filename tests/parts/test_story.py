@@ -73,8 +73,6 @@ class DescribeBaseStoryPart(object):
 
         get_or_add_image_.assert_called_once_with(story_part, "foo/bar.png")
         image_.scaled_dimensions.assert_called_once_with(100, 200)
-        print(111, inline.xml)
-        print(222, expected_xml)
         assert inline.xml == expected_xml
 
     def it_knows_the_next_available_xml_id(self, next_id_fixture):
