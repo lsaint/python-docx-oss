@@ -3,6 +3,8 @@ import xml.etree.ElementTree as ET
 from .constants import MIME_TYPE
 from .image import BaseImageHeader
 
+BASE_PX = 72
+
 
 class Svg(BaseImageHeader):
     """
@@ -47,7 +49,7 @@ class Svg(BaseImageHeader):
 
     @classmethod
     def _calculate_scaled_dimensions(
-        cls, viewbox: str, base_px: int = 72
+        cls, viewbox: str, base_px: int = BASE_PX
     ) -> tuple[int, int]:
         _, _, logical_width, logical_height = map(int, viewbox.split())
 

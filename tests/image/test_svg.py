@@ -3,7 +3,7 @@ from xml.etree.ElementTree import Element, tostring
 
 import pytest
 
-from docx.image.svg import Svg
+from docx.image.svg import BASE_PX, Svg
 
 
 @pytest.fixture
@@ -22,19 +22,20 @@ def svg_with_viewbox():
 
 @pytest.fixture(
     params=[
-        ("0 0 400 200", 96, 48),  # Landscape
-        ("0 0 200 400", 48, 96),  # Portrait
-        ("0 0 100 100", 96, 96),  # Square
+        ("0 0 400 200", BASE_PX, BASE_PX // 2),  # Landscape
+        ("0 0 200 400", BASE_PX // 2, BASE_PX),  # Portrait
+        ("0 0 100 100", BASE_PX, BASE_PX),  # Square
     ]
 )
 def viewbox_data(request):
+    """Fixture for different viewBox test cases as tuples."""
     return request.param
 
 
 @pytest.fixture(
     params=[
         (b'<svg width="200" height="100"/>', 200, 100),
-        (b'<svg viewBox="0 0 400 200"/>', 96, 48),
+        (b'<svg viewBox="0 0 400 200"/>', BASE_PX, BASE_PX // 2),
     ]
 )
 def svg_stream_data(request):
