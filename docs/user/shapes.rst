@@ -19,9 +19,10 @@ will cause it to move to the right. Often, a picture is placed in a paragraph
 by itself, but this is not required. It can have text before and after it in
 the paragraph in which it's placed.
 
-At the time of writing, |docx| only supports inline pictures. Floating pictures
-can be added. If you have an active use case, submit a feature request on the
-issue tracker. The ``Document.add_picture()`` method adds a specified picture
+The ``Document.add_picture()`` method adds a specified picture
 to the end of the document in a paragraph of its own. However, by digging
 a little deeper into the API you can place text on either side of the picture
 in its paragraph, or both.
+
+If width and height are not specified in svg, the default size is *72px*.
+The ratio of width and height is kept the same as viewbox attribute.

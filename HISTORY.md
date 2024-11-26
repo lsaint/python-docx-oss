@@ -1,9 +1,14 @@
 ## Release History
 
+**0.0.9 (2024-11-26)**
+
+-   svg file support in add_picture. #27
+-   update docs.
+
 **0.0.8 (2024-11-22)**
 
--   EastAsia font support fixes #25
--   Update README.md #26
+-   EastAsia font support fixes. #25
+-   Update README.md. #26
 
 **0.0.7 (2022-10-29)**
 
