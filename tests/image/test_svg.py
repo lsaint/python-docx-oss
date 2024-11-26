@@ -22,9 +22,9 @@ def svg_with_viewbox():
 
 @pytest.fixture(
     params=[
-        ("0 0 400 200", BASE_PX, BASE_PX // 2),  # Landscape
-        ("0 0 200 400", BASE_PX // 2, BASE_PX),  # Portrait
-        ("0 0 100 100", BASE_PX, BASE_PX),  # Square
+        ("0 0 400 200", 72, 36, 72),  # Landscape
+        ("0 0 200 400", 100, 200, 200),  # Portrait
+        ("0 0 100 100", 50, 50, 50),  # Square
     ]
 )
 def viewbox_data(request):
@@ -51,7 +51,7 @@ def test_dimensions_from_stream(svg_stream_data):
 
 
 def test_calculate_scaled_dimensions(viewbox_data):
-    viewbox, expected_width, expected_height = viewbox_data
-    width, height = Svg._calculate_scaled_dimensions(viewbox)
+    viewbox, expected_width, expected_height, base_px = viewbox_data
+    width, height = Svg._calculate_scaled_dimensions(viewbox, base_px)
     assert width == expected_width
     assert height == expected_height
