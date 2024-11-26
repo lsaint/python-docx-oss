@@ -42,7 +42,7 @@ Here's an example of what |docx| can do:
         'first item in ordered list', style='List Number'
     )
 
-    document.add_picture('monty-truth.png', width=Inches(1.25))
+    document.add_picture('500miles.png', width=Inches(5.9))
 
     records = (
         (3, '101', 'Spam'),
