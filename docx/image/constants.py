@@ -114,6 +114,7 @@ class MIME_TYPE(object):
     PNG = "image/png"
     TIFF = "image/tiff"
     EMF = "image/emf"
+    SVG = "image/svg+xml"
 
 
 class PNG_CHUNK_TYPE(object):
