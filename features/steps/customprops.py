@@ -6,8 +6,6 @@ Gherkin step implementations for custom properties-related features.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from datetime import datetime, timedelta
-
 from behave import given, then, when
 
 from docx import Document
@@ -22,6 +20,11 @@ from helpers import test_docx
 @given("a document having known custom properties")
 def given_a_document_having_known_custom_properties(context):
     context.document = Document(test_docx("doc-customprops"))
+
+
+@given("a document having known custom properties in legacy format")
+def given_a_document_having_known_custom_properties_legacy(context):
+    context.document = Document(test_docx("doc-customprops-legacy"))
 
 
 @given("a document having no custom properties part")

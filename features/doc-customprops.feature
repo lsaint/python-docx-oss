@@ -10,6 +10,12 @@ Feature: Read and write custom document properties
        And the custom property values match the known values
 
 
+  Scenario: read the custom properties of a document for legacy files
+     Given a document having known custom properties in legacy format
+      Then I can access the custom properties object
+       And the custom property values match the known values
+
+
   Scenario: change the custom properties of a document
      Given a document having known custom properties
       When I assign new values to the custom properties
