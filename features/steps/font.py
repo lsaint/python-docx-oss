@@ -195,8 +195,13 @@ def then_font_highlight_color_is_value(context, value):
 @then("font.name is {value}")
 def then_font_name_is_value(context, value):
     font = context.font
+    fontname = font.name
+    if isinstance(fontname, dict):
+        # word started differentiating typefaces for different regions of the world in 2025
+        # font.name is a dict of typeface names for different scripts
+        fontname = font.name['ascii']  # test against ascii name
     value = None if value == "None" else value
-    assert font.name == value
+    assert fontname == value, f"expected '{value}', got '{fontname}'"
 
 
 @then("font.size is {value}")

@@ -24,7 +24,7 @@ class CustomProperties:
                 except ValueError:
                     return elm.text
             elif elm.tag == "{%s}bool" % NS_VT:
-                return elm.text == "1"
+                return elm.text.lower() in ["1", "true"]
             return elm.text
 
     def __setitem__(self, key, value):
@@ -33,7 +33,7 @@ class CustomProperties:
             elmType = "lpwstr"
             if isinstance(value, bool):
                 elmType = "bool"
-                value = str(1 if value else 0)
+                value = 'true' if value else 'false'
             elif isinstance(value, numbers.Number):
                 elmType = "i4"
                 value = str(int(value))
@@ -48,7 +48,7 @@ class CustomProperties:
             if elm.tag == "{%s}i4" % NS_VT:
                 elm.text = str(int(value))
             elif elm.tag == "{%s}bool" % NS_VT:
-                elm.text = str(1 if value else 0)
+                elm.text = 'true' if value else 'false'
             else:
                 elm.text = f"{str(value)}"
 
