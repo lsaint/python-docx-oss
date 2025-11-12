@@ -198,14 +198,7 @@ register_element_cls("w:vAlign", CT_VerticalJc)
 register_element_cls("w:vMerge", CT_VMerge)
 
 from .text.font import CT_Highlight  # noqa
-from .text.font import (
-    CT_Color,
-    CT_Fonts,
-    CT_HpsMeasure,
-    CT_RPr,
-    CT_Underline,
-    CT_VerticalAlignRun,
-)
+from .text.font import CT_Color, CT_Fonts, CT_HpsMeasure, CT_RPr, CT_Underline, CT_VerticalAlignRun
 
 register_element_cls("w:b", CT_OnOff)
 register_element_cls("w:bCs", CT_OnOff)
@@ -239,6 +232,10 @@ register_element_cls("w:webHidden", CT_OnOff)
 from .text.paragraph import CT_P  # noqa
 
 register_element_cls("w:p", CT_P)
+
+from .text.hyperlink import CT_Hyperlink
+
+register_element_cls("w:hyperlink", CT_Hyperlink)
 
 from .text.parfmt import CT_Spacing  # noqa
 from .text.parfmt import CT_Ind, CT_Jc, CT_PPr, CT_TabStop, CT_TabStops
