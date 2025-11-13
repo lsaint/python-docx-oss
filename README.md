@@ -13,7 +13,7 @@ _As a Brazilian jiu-jitsu player, OSS means anything and everything. It's a term
     <a href="https://github.com/lsaint/python-docx-oss/blob/master/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
 </p>
 
----
+______________________________________________________________________
 
 ### FAQ
 
@@ -21,12 +21,12 @@ _As a Brazilian jiu-jitsu player, OSS means anything and everything. It's a term
 
 **A:** [HISTORY](https://github.com/lsaint/python-docx-oss/blob/master/HISTORY.md)
 
----
+______________________________________________________________________
 
 More information is available in the [python-docx-oss documentation](https://python-docx-oss.readthedocs.io/en/latest/)
 
 ### Donation
 
-If you find this project useful, please consider donating to support its continued development: [https://lsaint.github.io/donation/](https://lsaint.github.io/donation/)
+[https://lsaint.github.io/donation/](https://lsaint.github.io/donation/)
 
 This project is based on the original work by [Steve Canny](https://github.com/scanny) and has been modified by [Ethan St. Lee](https://github.com/lsaint).
