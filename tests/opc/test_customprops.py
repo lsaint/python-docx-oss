@@ -38,7 +38,7 @@ class DescribeCustomProperties(object):
     @pytest.fixture(
         params=[
             ("CustomPropString", "lpwstr", "Hi there!", "Hi there!"),
-            ("CustomPropBool", "bool", "0", False),
+            ("CustomPropBool", "bool", "false", False),
             ("CustomPropInt", "i4", "5", 5),
         ]
     )
