@@ -12,7 +12,7 @@ from docx.parts.numbering import NumberingPart
 from docx.parts.settings import SettingsPart
 from docx.parts.styles import StylesPart  # noqa
 
-__version__ = "0.0.9"
+__version__ = "0.0.10"
 
 
 # register custom Part classes with opc package reader
