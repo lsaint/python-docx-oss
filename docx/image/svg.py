@@ -43,8 +43,8 @@ class Svg(BaseImageHeader):
         if root.attrib.get("width") is None:
             return cls._calculate_scaled_dimensions(root.attrib["viewBox"])
 
-        width = int(root.attrib["width"])
-        height = int(root.attrib["height"])
+        width = int(float(root.attrib["width"].replace("pt", "")))
+        height = int(float(root.attrib["height"].replace("pt", "")))
         return width, height
 
     @classmethod
