@@ -25,4 +25,8 @@ _As a Brazilian jiu-jitsu player, OSS means anything and everything. It's a term
 
 More information is available in the [python-docx-oss documentation](https://python-docx-oss.readthedocs.io/en/latest/)
 
+### Donation
+
+If you find this project useful, please consider donating to support its continued development: [https://lsaint.github.io/donation/](https://lsaint.github.io/donation/)
+
 This project is based on the original work by [Steve Canny](https://github.com/scanny) and has been modified by [Ethan St. Lee](https://github.com/lsaint).
