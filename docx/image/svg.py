@@ -43,15 +43,15 @@ class Svg(BaseImageHeader):
         if root.attrib.get("width") is None:
             return cls._calculate_scaled_dimensions(root.attrib["viewBox"])
 
-        width = int(float(root.attrib["width"].replace("pt", "")))
-        height = int(float(root.attrib["height"].replace("pt", "")))
+        width = round(float(root.attrib["width"].replace("pt", "")))
+        height = round(float(root.attrib["height"].replace("pt", "")))
         return width, height
 
     @classmethod
     def _calculate_scaled_dimensions(
         cls, viewbox: str, base_px: int = BASE_PX
     ) -> tuple[int, int]:
-        _, _, logical_width, logical_height = map(int, viewbox.split())
+        _, _, logical_width, logical_height = map(float, viewbox.split())
 
         aspect_ratio = logical_width / logical_height
 
@@ -62,4 +62,4 @@ class Svg(BaseImageHeader):
             final_height = base_px
             final_width = base_px * aspect_ratio
 
-        return int(final_width), int(final_height)
+        return round(final_width), round(final_height)
