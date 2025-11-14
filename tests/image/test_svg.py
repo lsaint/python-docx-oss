@@ -25,6 +25,7 @@ def svg_with_viewbox():
         ("0 0 400 200", 72, 36, 72),  # Landscape
         ("0 0 200 400", 100, 200, 200),  # Portrait
         ("0 0 100 100", 50, 50, 50),  # Square
+        ("0 0 100.5 100.5", 50, 50, 50),  # Float
     ]
 )
 def viewbox_data(request):
@@ -35,7 +36,9 @@ def viewbox_data(request):
 @pytest.fixture(
     params=[
         (b'<svg width="200" height="100"/>', 200, 100),
+        (b'<svg width="200.5" height="100.5"/>', 200, 100),
         (b'<svg viewBox="0 0 400 200"/>', BASE_PX, BASE_PX // 2),
+        (b'<svg viewBox="0 0 400.5 200.5"/>', BASE_PX, 36),
     ]
 )
 def svg_stream_data(request):
