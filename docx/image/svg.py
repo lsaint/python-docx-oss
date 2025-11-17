@@ -19,7 +19,7 @@ class Svg(BaseImageHeader):
         in *stream*.
         """
         px_width, px_height = cls._dimensions_from_stream(stream)
-        return cls(px_width, px_height, 72, 72)
+        return cls(px_width, px_height, BASE_PX, BASE_PX)
 
     @property
     def content_type(self):
@@ -61,22 +61,22 @@ class Svg(BaseImageHeader):
 
         # ---conversion factors to points (assuming 72 DPI, where 1pt = 1px)---
         # This matches the existing behavior of the Svg class.
-        # 1 inch = 72 points
-        # 1 cm = 1/2.54 inch = 72/2.54 points
-        # 1 mm = 1/25.4 inch = 72/25.4 points
+        # 1 inch = BASE_PX points
+        # 1 cm = 1/2.54 inch = BASE_PX/2.54 points
+        # 1 mm = 1/25.4 inch = BASE_PX/25.4 points
         # 1 pc = 12 points
-        # 1 px = 1 point (at 72 DPI)
+        # 1 px = 1 point (at BASE_PX DPI)
 
         if unit in ("pt", "px", ""):
             return numeric_value
         elif unit == "in":
-            return numeric_value * 72.0
+            return numeric_value * float(BASE_PX)
         elif unit == "pc":
             return numeric_value * 12.0
         elif unit == "cm":
-            return numeric_value * 72.0 / 2.54
+            return numeric_value * float(BASE_PX) / 2.54
         elif unit == "mm":
-            return numeric_value * 72.0 / 25.4
+            return numeric_value * float(BASE_PX) / 25.4
         # ---treat other units as px for now---
         else:
             return numeric_value
