@@ -1,3 +1,4 @@
+import re
 import xml.etree.ElementTree as ET
 
 from .constants import MIME_TYPE
@@ -18,7 +19,7 @@ class Svg(BaseImageHeader):
         in *stream*.
         """
         px_width, px_height = cls._dimensions_from_stream(stream)
-        return cls(px_width, px_height, 72, 72)
+        return cls(px_width, px_height, BASE_PX, BASE_PX)
 
     @property
     def content_type(self):
@@ -36,22 +37,74 @@ class Svg(BaseImageHeader):
         return "svg"
 
     @classmethod
+    def _parse_svg_unit_value(cls, value_str: str) -> float:
+        """
+        Parse an SVG length value and return it in points (which are 1/72 of an inch).
+        Handles units like px, pt, cm, mm, in, pc.
+        """
+        if not value_str:
+            return 0.0
+
+        value_str = value_str.strip().lower()
+
+        # Regex to separate the numeric value from the unit, allowing for spaces
+        match = re.match(r"^(-?\d*\.?\d+)\s*([a-z%]*)$", value_str)
+        if not match:
+            # Handle case where there is no unit (treat as px, as per SVG spec)
+            try:
+                return float(value_str)
+            except ValueError:
+                return 0.0
+
+        value, unit = match.groups()
+        numeric_value = float(value)
+
+        # ---conversion factors to points (assuming 72 DPI, where 1pt = 1px)---
+        # This matches the existing behavior of the Svg class.
+        # 1 inch = BASE_PX points
+        # 1 cm = 1/2.54 inch = BASE_PX/2.54 points
+        # 1 mm = 1/25.4 inch = BASE_PX/25.4 points
+        # 1 pc = 12 points
+        # 1 px = 1 point (at BASE_PX DPI)
+
+        if unit in ("pt", "px", ""):
+            return numeric_value
+        elif unit == "in":
+            return numeric_value * float(BASE_PX)
+        elif unit == "pc":
+            return numeric_value * 12.0
+        elif unit == "cm":
+            return numeric_value * float(BASE_PX) / 2.54
+        elif unit == "mm":
+            return numeric_value * float(BASE_PX) / 25.4
+        # ---treat other units as px for now---
+        else:
+            return numeric_value
+
+    @classmethod
     def _dimensions_from_stream(cls, stream):
         stream.seek(0)
         data = stream.read()
         root = ET.fromstring(data)
-        if root.attrib.get("width") is None:
+
+        width_str = root.attrib.get("width")
+        height_str = root.attrib.get("height")
+
+        if width_str and height_str:
+            width = round(cls._parse_svg_unit_value(width_str))
+            height = round(cls._parse_svg_unit_value(height_str))
+            return width, height
+
+        if root.attrib.get("viewBox"):
             return cls._calculate_scaled_dimensions(root.attrib["viewBox"])
 
-        width = int(float(root.attrib["width"].replace("pt", "")))
-        height = int(float(root.attrib["height"].replace("pt", "")))
-        return width, height
+        return 0, 0
 
     @classmethod
     def _calculate_scaled_dimensions(
         cls, viewbox: str, base_px: int = BASE_PX
     ) -> tuple[int, int]:
-        _, _, logical_width, logical_height = map(int, viewbox.split())
+        _, _, logical_width, logical_height = map(float, viewbox.split())
 
         aspect_ratio = logical_width / logical_height
 
@@ -62,4 +115,4 @@ class Svg(BaseImageHeader):
             final_height = base_px
             final_width = base_px * aspect_ratio
 
-        return int(final_width), int(final_height)
+        return round(final_width), round(final_height)
