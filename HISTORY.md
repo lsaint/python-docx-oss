@@ -1,5 +1,9 @@
 ## Release History
 
+0.0.11 (2025-11-17)
+
+- round-float viewbox and enhance svg unit parsing #31
+
 **0.0.10 (2025-11-13)**
 
 - Fix modern bool representations in .docx files. #29
