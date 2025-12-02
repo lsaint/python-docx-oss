@@ -72,6 +72,57 @@ class Jfif(Jpeg):
         return cls(px_width, px_height, horz_dpi, vert_dpi)
 
 
+
+class IncompleteJpeg(Jpeg):
+    """
+    Represents a JPEG image that is incomplete, i.e. does not contain a
+    complete set of markers. For example: APP0 or APP1 is missing.
+    eg: b'\xff\xd8\xff\xe2\x0cXICC_PROFILE\x00\x01
+    """
+    """
+    Image header parser for Incomplete JPEG image format
+    """
+    DEFAULT_DPI = 72
+
+    @classmethod
+    def from_stream(cls, stream):
+        """
+        If APP0 or APP1 is missing, the DPI values will be set to the default value of |DEFAULT_DPI|(72).
+        """
+        markers = _JfifMarkers.from_stream(stream)
+        px_width = markers.sof.px_width
+        px_height = markers.sof.px_height
+        horz_dpi, vert_dpi = cls._get_horz_dpi_and_vert_dpi(markers)
+        return cls(px_width, px_height, horz_dpi, vert_dpi)
+
+    @classmethod
+    def _get_horz_dpi_and_vert_dpi(cls, markers):
+        horz_dpi, vert_dpi = cls._try_get_dpi_from_app0(markers)
+        if horz_dpi is None or vert_dpi is None:
+            horz_dpi, vert_dpi = cls._try_get_dpi_from_app1(markers)
+        if horz_dpi is None or vert_dpi is None:
+            horz_dpi = vert_dpi = cls.DEFAULT_DPI
+        return horz_dpi, vert_dpi
+
+    @staticmethod
+    def _try_get_dpi_from_app0(markers):
+        try:
+            horz_dpi = markers.app0.horz_dpi
+            vert_dpi = markers.app0.vert_dpi
+            return horz_dpi, vert_dpi
+        except KeyError:
+            return None, None
+
+    @staticmethod
+    def _try_get_dpi_from_app1(markers):
+        try:
+            horz_dpi = markers.app1.horz_dpi
+            vert_dpi = markers.app1.vert_dpi
+            return horz_dpi, vert_dpi
+        except KeyError:
+            return None, None
+
+
 class _JfifMarkers(object):
     """
     Sequence of markers in a JPEG file, perhaps truncated at first SOS marker

@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from docx.image.bmp import Bmp
 from docx.image.emf import Emf
 from docx.image.gif import Gif
-from docx.image.jpeg import Exif, Jfif
+from docx.image.jpeg import Exif, Jfif, IncompleteJpeg
 from docx.image.png import Png
 from docx.image.svg import Svg
 from docx.image.tiff import Tiff
@@ -21,6 +21,7 @@ SIGNATURES = (
     (Png, 0, b"\x89PNG\x0D\x0A\x1A\x0A"),
     (Jfif, 6, b"JFIF"),
     (Exif, 6, b"Exif"),
+    (IncompleteJpeg, 0, b"\xff\xd8"),
     (Gif, 0, b"GIF87a"),
     (Gif, 0, b"GIF89a"),
     (Tiff, 0, b"MM\x00*"),  # big-endian (Motorola) TIFF
