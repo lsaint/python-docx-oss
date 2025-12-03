@@ -31,6 +31,8 @@ from ..unitutil.mock import (
     initializer_mock,
     instance_mock,
     method_mock,
+    MagicMock,
+    PropertyMock
 )
 
 
@@ -42,6 +44,14 @@ class DescribeJpeg(object):
     def it_knows_its_default_ext(self):
         jpeg = Jpeg(None, None, None, None)
         assert jpeg.default_ext == "jpg"
+
+    def it_not_contains_app0_or_app1(self):
+        with open("tests/test_files/jpeg_without_app0_and_app1.jpg", "rb") as f:
+            jpeg = Jpeg.from_stream(f)
+            assert jpeg.horz_dpi == 72
+            assert jpeg.vert_dpi == 72
+            assert jpeg.px_width == 1190
+            assert jpeg.px_height == 1190
 
     class DescribeExif(object):
         def it_can_construct_from_an_exif_stream(self, from_exif_fixture):
@@ -637,3 +647,74 @@ class Describe_MarkerParser(object):
     @pytest.fixture
     def stream_reader_(self, request):
         return instance_mock(request, StreamReader)
+
+
+class TestJpegMethods:
+    def test_get_horz_dpi_and_vert_dpi_from_app0(self, mocker):
+        markers = MagicMock()
+        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(96, 96))
+        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
+        assert horz_dpi == 96
+        assert vert_dpi == 96
+
+    def test_get_horz_dpi_and_vert_dpi_from_app0_but_return_zero(self, mocker):
+        markers = MagicMock()
+        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(0, 0))
+        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
+        assert horz_dpi == 72
+        assert vert_dpi == 72
+
+
+    def test_get_horz_dpi_and_vert_dpi_from_app1(self, mocker):
+        markers = MagicMock()
+        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(None, None))
+        mocker.patch.object(Jpeg, "_try_get_dpi_from_app1", return_value=(96, 96))
+        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
+        assert horz_dpi == 96
+        assert vert_dpi == 96
+
+    def test_get_horz_dpi_and_vert_dpi_from_app1_but_return_zero(self, mocker):
+        markers = MagicMock()
+        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(None, None))
+        mocker.patch.object(Jpeg, "_try_get_dpi_from_app1", return_value=(0, 0))
+        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
+        assert horz_dpi == 72
+        assert vert_dpi == 72
+
+    def test_get_horz_dpi_and_vert_dpi_from_DEFAULT_DPI(self, mocker):
+        markers = MagicMock()
+        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(None, None))
+        mocker.patch.object(Jpeg, "_try_get_dpi_from_app1", return_value=(None, None))
+        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
+        assert horz_dpi == 72
+        assert vert_dpi == 72
+
+    def test__try_get_dpi_from_app0_returns_None(self, mocker):
+        markers = MagicMock()
+        type(markers).app0 = PropertyMock(side_effect=KeyError("APP0 not found"))
+        horz_dpi,vert_dpi = Jpeg._try_get_dpi_from_app0(markers)
+        assert horz_dpi is None
+        assert vert_dpi is None
+
+    def test__try_get_dpi_from_app0(self, mocker):
+        markers = MagicMock()
+        markers.app0.horz_dpi = 96
+        markers.app0.vert_dpi = 96
+        horz_dpi,vert_dpi = Jpeg._try_get_dpi_from_app0(markers)
+        assert horz_dpi == 96
+        assert vert_dpi == 96
+
+    def test__try_get_dpi_from_app1_returns_None(self, mocker):
+        markers = MagicMock()
+        type(markers).app1 = PropertyMock(side_effect=KeyError("APP1 not found"))
+        horz_dpi,vert_dpi = Jpeg._try_get_dpi_from_app1(markers)
+        assert horz_dpi is None
+        assert vert_dpi is None
+
+    def test__try_get_dpi_from_app1(self, mocker):
+        markers = MagicMock()
+        markers.app1.horz_dpi = 96
+        markers.app1.vert_dpi = 96
+        horz_dpi,vert_dpi = Jpeg._try_get_dpi_from_app1(markers)
+        assert horz_dpi == 96
+        assert vert_dpi == 96

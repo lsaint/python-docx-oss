@@ -29,6 +29,51 @@ class Jpeg(BaseImageHeader):
         """
         return "jpg"
 
+    DEFAULT_DPI = 72
+
+    @classmethod
+    def from_stream(cls, stream):
+        """
+        If APP0 or APP1 is missing, the DPI values will be set to the default value of |DEFAULT_DPI|(72).
+        """
+        markers = _JfifMarkers.from_stream(stream)
+        px_width = markers.sof.px_width
+        px_height = markers.sof.px_height
+        horz_dpi, vert_dpi = cls._get_horz_dpi_and_vert_dpi(markers)
+        return cls(px_width, px_height, horz_dpi, vert_dpi)
+
+    @classmethod
+    def _get_horz_dpi_and_vert_dpi(cls, markers):
+        horz_dpi, vert_dpi = cls._try_get_dpi_from_app0(markers)
+        if horz_dpi is None or vert_dpi is None:
+            horz_dpi, vert_dpi = cls._try_get_dpi_from_app1(markers)
+        if horz_dpi is None or vert_dpi is None:
+            horz_dpi = vert_dpi = cls.DEFAULT_DPI
+        # DPI values in APP0 or APP1 may be 0, which is invalid. should use default value.
+        if horz_dpi == 0:
+            horz_dpi = cls.DEFAULT_DPI
+        if vert_dpi == 0:
+            vert_dpi = cls.DEFAULT_DPI
+        return horz_dpi, vert_dpi
+
+    @staticmethod
+    def _try_get_dpi_from_app0(markers):
+        try:
+            horz_dpi = markers.app0.horz_dpi
+            vert_dpi = markers.app0.vert_dpi
+            return horz_dpi, vert_dpi
+        except KeyError:
+            return None, None
+
+    @staticmethod
+    def _try_get_dpi_from_app1(markers):
+        try:
+            horz_dpi = markers.app1.horz_dpi
+            vert_dpi = markers.app1.vert_dpi
+            return horz_dpi, vert_dpi
+        except KeyError:
+            return None, None
+
 
 class Exif(Jpeg):
     """
