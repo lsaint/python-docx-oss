@@ -13,6 +13,7 @@ class Jpeg(BaseImageHeader):
     """
     Base class for JFIF and EXIF subclasses.
     """
+
     @property
     def content_type(self):
         """
