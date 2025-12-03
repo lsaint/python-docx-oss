@@ -1,5 +1,9 @@
 ## Release History
 
+0.0.12 (2025-12-03)
+
+- default dpi for jpeg #33
+
 0.0.11 (2025-11-17)
 
 - round-float viewbox and enhance svg unit parsing #31
