@@ -50,6 +50,8 @@ class DescribeJpeg(object):
             jpeg = Jpeg.from_stream(f)
             assert jpeg.horz_dpi == 72
             assert jpeg.vert_dpi == 72
+            assert jpeg.px_width == 1190
+            assert jpeg.px_height == 1190
 
     class DescribeExif(object):
         def it_can_construct_from_an_exif_stream(self, from_exif_fixture):
