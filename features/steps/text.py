@@ -1,24 +1,18 @@
-# encoding: utf-8
-
-"""
-Step implementations for text-related features
-"""
-
-from __future__ import absolute_import, print_function, unicode_literals
+"""Step implementations for text-related features."""
 
 import hashlib
 
 from behave import given, then, when
+from behave.runner import Context
 
 from docx import Document
 from docx.enum.text import WD_BREAK, WD_UNDERLINE
-from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls, qn
+from docx.oxml.parser import parse_xml
 from docx.text.font import Font
 from docx.text.run import Run
 
 from helpers import test_docx, test_file, test_text
-
 
 # given ===================================================
 
@@ -54,16 +48,19 @@ def given_a_run_having_mixed_text_content(context):
     r_xml = """\
         <w:r %s>
           <w:t>abc</w:t>
-          <w:tab/>
+          <w:br/>
           <w:t>def</w:t>
           <w:cr/>
           <w:t>ghi</w:t>
           <w:drawing/>
-          <w:br/>
           <w:t>jkl</w:t>
-        </w:r>""" % nsdecls(
-        "w"
-    )
+          <w:tab/>
+          <w:t>mno</w:t>
+          <w:noBreakHyphen/>
+          <w:t>pqr</w:t>
+          <w:ptab/>
+          <w:t>stu</w:t>
+        </w:r>""" % nsdecls("w")
     r = parse_xml(r_xml)
     context.run = Run(r, None)
 
@@ -84,6 +81,14 @@ def given_a_run_having_style(context, style):
     }[style]
     context.document = document = Document(test_docx("run-char-style"))
     context.run = document.paragraphs[0].runs[run_idx]
+
+
+@given("a run having {zero_or_more} rendered page breaks")
+def given_a_run_having_rendered_page_breaks(context: Context, zero_or_more: str):
+    paragraph_idx = {"no": 0, "one": 1, "two": 3}[zero_or_more]
+    document = Document(test_docx("par-rendered-page-breaks"))
+    paragraph = document.paragraphs[paragraph_idx]
+    context.run = paragraph.runs[0]
 
 
 @given("a run inside a table cell retrieved from {cell_source}")
@@ -150,7 +155,7 @@ def when_I_add_text_to_the_run(context):
 
 @when("I assign mixed text to the text property")
 def when_I_assign_mixed_text_to_the_text_property(context):
-    context.run.text = "abc\tdef\nghi\rjkl"
+    context.run.text = "abc\ndef\rghijkl\tmno-pqr\tstu"
 
 
 @when("I assign {value_str} to its {bool_prop_name} property")
@@ -210,6 +215,13 @@ def then_type_is_page_break(context):
     assert attrib == {qn("w:type"): "page"}
 
 
+@then("run.contains_page_break is {value}")
+def then_run_contains_page_break_is_value(context: Context, value: str):
+    actual = context.run.contains_page_break
+    expected = {"True": True, "False": False}[value]
+    assert actual == expected, f"expected: {expected}, got: {actual}"
+
+
 @then("run.font is the Font object for the run")
 def then_run_font_is_the_Font_object_for_the_run(context):
     run, font = context.run, context.run.font
@@ -217,11 +229,25 @@ def then_run_font_is_the_Font_object_for_the_run(context):
     assert font.element is run.element
 
 
+@then("run.iter_inner_content() generates the run text and rendered page-breaks")
+def then_run_iter_inner_content_generates_text_and_page_breaks(context: Context):
+    actual_value = [type(item).__name__ for item in context.run.iter_inner_content()]
+    expected_value = ["str", "RenderedPageBreak", "str", "RenderedPageBreak", "str"]
+    assert actual_value == expected_value, f"expected: {expected_value}, got: {actual_value}"
+
+
 @then("run.style is styles['{style_name}']")
 def then_run_style_is_style(context, style_name):
     expected_value = context.document.styles[style_name]
     run = context.run
     assert run.style == expected_value, "got %s" % run.style
+
+
+@then("run.text contains the text content of the run")
+def then_run_text_contains_the_text_content_of_the_run(context):
+    actual = context.run.text
+    expected = "abc\ndef\nghijkl\tmno-pqr\tstu"
+    assert actual == expected, f"expected:\n'{expected}'\n\ngot:\n'{actual}'"
 
 
 @then("the last item in the run is a break")
@@ -237,15 +263,15 @@ def then_the_picture_appears_at_the_end_of_the_run(context):
     run = context.run
     r = run._r
     blip_rId = r.xpath(
-        "./w:drawing/wp:inline/a:graphic/a:graphicData/pic:pic/pic:blipFill/"
-        "a:blip/@r:embed"
+        "./w:drawing/wp:inline/a:graphic/a:graphicData/pic:pic/pic:blipFill/a:blip/@r:embed"
     )[0]
     image_part = run.part.related_parts[blip_rId]
     image_sha1 = hashlib.sha1(image_part.blob).hexdigest()
     expected_sha1 = "79769f1e202add2e963158b532e36c2c0f76a70c"
-    assert (
-        image_sha1 == expected_sha1
-    ), "image SHA1 doesn't match, expected %s, got %s" % (expected_sha1, image_sha1)
+    assert image_sha1 == expected_sha1, "image SHA1 doesn't match, expected %s, got %s" % (
+        expected_sha1,
+        image_sha1,
+    )
 
 
 @then("the run appears in {boolean_prop_name} unconditionally")
@@ -298,8 +324,3 @@ def then_the_tab_appears_at_the_end_of_the_run(context):
     r = context.run._r
     tab = r.find(qn("w:tab"))
     assert tab is not None
-
-
-@then("the text of the run represents the textual run content")
-def then_the_text_of_the_run_represents_the_textual_run_content(context):
-    assert context.run.text == "abc\tdef\nghi\njkl", "got '%s'" % context.run.text

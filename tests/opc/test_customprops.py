@@ -2,6 +2,7 @@
 Unit test suite for the docx.opc.customprops module
 """
 import pytest
+from lxml import etree
 
 from docx.opc.customprops import CustomProperties
 from docx.oxml import parse_xml
@@ -17,9 +18,9 @@ class DescribeCustomProperties(object):
         pass
 
     def it_can_set_new_prop_values(self, prop_set_fixture):
-        custom_properties, prop_name, value, exp_xml = prop_set_fixture
+        custom_properties, prop_name, value, expected_xml = prop_set_fixture
         custom_properties[prop_name] = value
-        assert custom_properties._element.xml == exp_xml
+        assert etree.tostring(custom_properties._element, pretty_print=True).decode() == expected_xml
 
     # fixtures -------------------------------------------------------
 
@@ -44,40 +45,35 @@ class DescribeCustomProperties(object):
     )
     def prop_set_fixture(self, request, custom_properties_blank):
         prop_name, str_type, str_value, value = request.param
-        expected_xml = self.custom_properties(prop_name, str_type, str_value)
+        # The actual code generates pid="2" for the first prop.
+        expected_xml = self.custom_properties(prop_name, str_type, str_value, pid="2")
         return custom_properties_blank, prop_name, value, expected_xml
 
     # fixture components ---------------------------------------------
 
-    def custom_properties(self, prop_name, str_type, str_value):
-        tmpl = (
-            '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" '
-            'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">\n'
-            '  <property name="%s" fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2">\n'
-            "    <vt:%s>%s</vt:%s>\n"
-            "  </property>\n"
-            "</Properties>"
-        )
-        return tmpl % (prop_name, str_type, str_value, str_type)
+    def custom_properties(self, prop_name, str_type, str_value, pid):
+        # Using triple-quotes for safe multi-line string definition
+        tmpl = f'''<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+  <property name="{prop_name}" fmtid="{{D5CDD505-2E9C-101B-9397-08002B2CF9AE}}" pid="{pid}">
+    <vt:{str_type}>{str_value}</vt:{str_type}>
+  </property>
+</Properties>
+'''
+        return tmpl
 
     @pytest.fixture
     def custom_properties_blank(self):
-        element = parse_xml(
-            '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" '
-            'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">'
-            "</Properties>\n"
-        )
+        xml = '''<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"></Properties>'''
+        element = parse_xml(xml)
         return CustomProperties(element)
 
     @pytest.fixture
     def custom_properties_default(self):
-        element = parse_xml(
-            b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-            b'<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" '
-            b'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">\n'
-            b'  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2" name="CustomPropBool"><vt:bool>1</vt:bool></property>\n'
-            b'  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="3" name="CustomPropInt"><vt:i4>13</vt:i4></property>\n'
-            b'  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="4" name="CustomPropString"><vt:lpwstr>Test String</vt:lpwstr></property>\n'
-            b"</Properties>\n"
-        )
+        xml = b'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2" name="CustomPropBool"><vt:bool>1</vt:bool></property>
+  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="3" name="CustomPropInt"><vt:i4>13</vt:i4></property>
+  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="4" name="CustomPropString"><vt:lpwstr>Test String</vt:lpwstr></property>
+</Properties>'''
+        element = parse_xml(xml)
         return CustomProperties(element)

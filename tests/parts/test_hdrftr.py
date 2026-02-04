@@ -1,12 +1,9 @@
-# encoding: utf-8
-
-"""Unit test suite for the docx.parts.hdrftr module"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Unit test suite for the docx.parts.hdrftr module."""
 
 import pytest
 
-from docx.opc.constants import CONTENT_TYPE as CT, RELATIONSHIP_TYPE as RT
+from docx.opc.constants import CONTENT_TYPE as CT
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.opc.part import PartFactory
 from docx.package import Package
 from docx.parts.hdrftr import FooterPart, HeaderPart
@@ -15,7 +12,7 @@ from ..unitutil.cxml import element
 from ..unitutil.mock import function_mock, initializer_mock, instance_mock, method_mock
 
 
-class DescribeFooterPart(object):
+class DescribeFooterPart:
     def it_is_used_by_loader_to_construct_footer_part(
         self, package_, FooterPart_load_, footer_part_
     ):
@@ -30,9 +27,7 @@ class DescribeFooterPart(object):
         FooterPart_load_.assert_called_once_with(partname, content_type, blob, package_)
         assert part is footer_part_
 
-    def it_can_create_a_new_footer_part(
-        self, package_, _default_footer_xml_, parse_xml_, _init_
-    ):
+    def it_can_create_a_new_footer_part(self, package_, _default_footer_xml_, parse_xml_, _init_):
         ftr = element("w:ftr")
         package_.next_partname.return_value = "/word/footer24.xml"
         _default_footer_xml_.return_value = "<w:ftr>"
@@ -83,7 +78,7 @@ class DescribeFooterPart(object):
         return function_mock(request, "docx.parts.hdrftr.parse_xml")
 
 
-class DescribeHeaderPart(object):
+class DescribeHeaderPart:
     def it_is_used_by_loader_to_construct_header_part(
         self, package_, HeaderPart_load_, header_part_
     ):
@@ -98,9 +93,7 @@ class DescribeHeaderPart(object):
         HeaderPart_load_.assert_called_once_with(partname, content_type, blob, package_)
         assert part is header_part_
 
-    def it_can_create_a_new_header_part(
-        self, package_, _default_header_xml_, parse_xml_, _init_
-    ):
+    def it_can_create_a_new_header_part(self, package_, _default_header_xml_, parse_xml_, _init_):
         hdr = element("w:hdr")
         package_.next_partname.return_value = "/word/header42.xml"
         _default_header_xml_.return_value = "<w:hdr>"

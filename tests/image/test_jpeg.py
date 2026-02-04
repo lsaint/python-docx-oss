@@ -1,21 +1,20 @@
-# encoding: utf-8
+# pyright: basic, reportPrivateUsage=false
 
 """Unit test suite for docx.image.jpeg module"""
 
-from __future__ import absolute_import, print_function
+import io
 
 import pytest
 
-from docx.compat import BytesIO
 from docx.image.constants import JPEG_MARKER_CODE, MIME_TYPE
 from docx.image.helpers import BIG_ENDIAN, StreamReader
 from docx.image.jpeg import (
-    _App0Marker,
-    _App1Marker,
     Exif,
     Jfif,
-    _JfifMarkers,
     Jpeg,
+    _App0Marker,
+    _App1Marker,
+    _JfifMarkers,
     _Marker,
     _MarkerFactory,
     _MarkerFinder,
@@ -31,29 +30,30 @@ from ..unitutil.mock import (
     initializer_mock,
     instance_mock,
     method_mock,
-    MagicMock,
-    PropertyMock
 )
+from ..unitutil.file import test_file
 
 
-class DescribeJpeg(object):
+class DescribeJpeg:
     def it_knows_its_content_type(self):
-        jpeg = Jpeg(None, None, None, None)
+        jpeg = Jpeg(0, 0, 0, 0)
         assert jpeg.content_type == MIME_TYPE.JPEG
 
     def it_knows_its_default_ext(self):
-        jpeg = Jpeg(None, None, None, None)
+        jpeg = Jpeg(0, 0, 0, 0)
         assert jpeg.default_ext == "jpg"
 
-    def it_not_contains_app0_or_app1(self):
-        with open("tests/test_files/jpeg_without_app0_and_app1.jpg", "rb") as f:
-            jpeg = Jpeg.from_stream(f)
-            assert jpeg.horz_dpi == 72
-            assert jpeg.vert_dpi == 72
-            assert jpeg.px_width == 1190
-            assert jpeg.px_height == 1190
+    def it_falls_back_to_default_dpi_when_app_markers_missing(self):
+        path = test_file("jpeg_without_app0_and_app1.jpg")
+        with open(path, "rb") as stream:
+            jpeg = Jpeg.from_stream(stream)
 
-    class DescribeExif(object):
+        assert jpeg.horz_dpi == Jpeg.DEFAULT_DPI
+        assert jpeg.vert_dpi == Jpeg.DEFAULT_DPI
+        assert jpeg.px_width == 1190
+        assert jpeg.px_height == 1190
+
+    class DescribeExif:
         def it_can_construct_from_an_exif_stream(self, from_exif_fixture):
             # fixture ----------------------
             stream_, _JfifMarkers_, cx, cy, horz_dpi, vert_dpi = from_exif_fixture
@@ -67,7 +67,7 @@ class DescribeJpeg(object):
             assert exif.horz_dpi == horz_dpi
             assert exif.vert_dpi == vert_dpi
 
-    class DescribeJfif(object):
+    class DescribeJfif:
         def it_can_construct_from_a_jfif_stream(self, from_jfif_fixture):
             stream_, _JfifMarkers_, cx, cy, horz_dpi, vert_dpi = from_jfif_fixture
             jfif = Jfif.from_stream(stream_)
@@ -112,10 +112,10 @@ class DescribeJpeg(object):
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
 
-class Describe_JfifMarkers(object):
+class Describe_JfifMarkers:
     def it_can_construct_from_a_jfif_stream(
         self, stream_, _MarkerParser_, _JfifMarkers__init_, soi_, app0_, sof_, sos_
     ):
@@ -238,10 +238,10 @@ class Describe_JfifMarkers(object):
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
 
-class Describe_Marker(object):
+class Describe_Marker:
     def it_can_construct_from_a_stream_and_offset(self, from_stream_fixture):
         stream, marker_code, offset, _Marker__init_, length = from_stream_fixture
 
@@ -260,8 +260,8 @@ class Describe_Marker(object):
     )
     def from_stream_fixture(self, request, _Marker__init_):
         marker_code, offset, length = request.param
-        bytes_ = b"\xFF\xD8\xFF\xE0\x00\x10"
-        stream_reader = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        bytes_ = b"\xff\xd8\xff\xe0\x00\x10"
+        stream_reader = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
         return stream_reader, marker_code, offset, _Marker__init_, length
 
     @pytest.fixture
@@ -269,12 +269,12 @@ class Describe_Marker(object):
         return initializer_mock(request, _Marker)
 
 
-class Describe_App0Marker(object):
+class Describe_App0Marker:
     def it_can_construct_from_a_stream_and_offset(self, _App0Marker__init_):
-        bytes_ = b"\x00\x10JFIF\x00\x01\x01\x01\x00\x2A\x00\x18"
+        bytes_ = b"\x00\x10JFIF\x00\x01\x01\x01\x00\x2a\x00\x18"
         marker_code, offset, length = JPEG_MARKER_CODE.APP0, 0, 16
         density_units, x_density, y_density = 1, 42, 24
-        stream = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        stream = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
 
         app0_marker = _App0Marker.from_stream(stream, marker_code, offset)
 
@@ -307,14 +307,14 @@ class Describe_App0Marker(object):
         return density_units, x_density, y_density, horz_dpi, vert_dpi
 
 
-class Describe_App1Marker(object):
+class Describe_App1Marker:
     def it_can_construct_from_a_stream_and_offset(
         self, _App1Marker__init_, _tiff_from_exif_segment_
     ):
         bytes_ = b"\x00\x42Exif\x00\x00"
         marker_code, offset, length = JPEG_MARKER_CODE.APP1, 0, 66
         horz_dpi, vert_dpi = 42, 24
-        stream = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        stream = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
 
         app1_marker = _App1Marker.from_stream(stream, marker_code, offset)
 
@@ -327,13 +327,11 @@ class Describe_App1Marker(object):
     def it_can_construct_from_non_Exif_APP1_segment(self, _App1Marker__init_):
         bytes_ = b"\x00\x42Foobar"
         marker_code, offset, length = JPEG_MARKER_CODE.APP1, 0, 66
-        stream = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        stream = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
 
         app1_marker = _App1Marker.from_stream(stream, marker_code, offset)
 
-        _App1Marker__init_.assert_called_once_with(
-            ANY, marker_code, offset, length, 72, 72
-        )
+        _App1Marker__init_.assert_called_once_with(ANY, marker_code, offset, length, 72, 72)
         assert isinstance(app1_marker, _App1Marker)
 
     def it_gets_a_tiff_from_its_Exif_segment_to_help_construct(self, get_tiff_fixture):
@@ -358,13 +356,10 @@ class Describe_App1Marker(object):
         return initializer_mock(request, _App1Marker)
 
     @pytest.fixture
-    def BytesIO_(self, request, substream_):
-        return class_mock(request, "docx.image.jpeg.BytesIO", return_value=substream_)
-
-    @pytest.fixture
-    def get_tiff_fixture(self, request, BytesIO_, substream_, Tiff_, tiff_):
+    def get_tiff_fixture(self, request, substream_, Tiff_, tiff_):
         bytes_ = b"xfillerxMM\x00*\x00\x00\x00\x42"
-        stream_reader = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        stream_reader = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
+        BytesIO_ = class_mock(request, "docx.image.jpeg.io.BytesIO", return_value=substream_)
         offset, segment_length, segment_bytes = 0, 16, bytes_[8:]
         return (
             stream_reader,
@@ -379,7 +374,7 @@ class Describe_App1Marker(object):
 
     @pytest.fixture
     def substream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
     @pytest.fixture
     def Tiff_(self, request, tiff_):
@@ -402,12 +397,12 @@ class Describe_App1Marker(object):
         )
 
 
-class Describe_SofMarker(object):
+class Describe_SofMarker:
     def it_can_construct_from_a_stream_and_offset(self, request, _SofMarker__init_):
-        bytes_ = b"\x00\x11\x00\x00\x2A\x00\x18"
+        bytes_ = b"\x00\x11\x00\x00\x2a\x00\x18"
         marker_code, offset, length = JPEG_MARKER_CODE.SOF0, 0, 17
         px_width, px_height = 24, 42
-        stream = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        stream = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
 
         sof_marker = _SofMarker.from_stream(stream, marker_code, offset)
 
@@ -428,7 +423,7 @@ class Describe_SofMarker(object):
         return initializer_mock(request, _SofMarker)
 
 
-class Describe_MarkerFactory(object):
+class Describe_MarkerFactory:
     def it_constructs_the_appropriate_marker_object(self, call_fixture):
         marker_code, stream_, offset_, marker_cls_ = call_fixture
         marker = _MarkerFactory(marker_code, stream_, offset_)
@@ -489,10 +484,10 @@ class Describe_MarkerFactory(object):
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
 
-class Describe_MarkerFinder(object):
+class Describe_MarkerFinder:
     def it_can_construct_from_a_stream(self, stream_, _MarkerFinder__init_):
         marker_finder = _MarkerFinder.from_stream(stream_)
 
@@ -523,18 +518,18 @@ class Describe_MarkerFinder(object):
     )
     def next_fixture(self, request):
         start, marker_code, segment_offset = request.param
-        bytes_ = b"\xFF\xD8\xFF\xE0\x00\x01\xFF\x00\xFF\xFF\xFF\xD9"
-        stream_reader = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        bytes_ = b"\xff\xd8\xff\xe0\x00\x01\xff\x00\xff\xff\xff\xd9"
+        stream_reader = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
         marker_finder = _MarkerFinder(stream_reader)
         expected_code_and_offset = (marker_code, segment_offset)
         return marker_finder, start, expected_code_and_offset
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
 
-class Describe_MarkerParser(object):
+class Describe_MarkerParser:
     def it_can_construct_from_a_jfif_stream(
         self, stream_, StreamReader_, _MarkerParser__init_, stream_reader_
     ):
@@ -555,7 +550,7 @@ class Describe_MarkerParser(object):
             offsets,
             marker_lst,
         ) = iter_markers_fixture
-        markers = [marker for marker in marker_parser.iter_markers()]
+        markers = list(marker_parser.iter_markers())
         _MarkerFinder_.from_stream.assert_called_once_with(stream_)
         assert marker_finder_.next.call_args_list == [call(0), call(2), call(20)]
         assert _MarkerFactory_.call_args_list == [
@@ -636,85 +631,12 @@ class Describe_MarkerParser(object):
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
     @pytest.fixture
     def StreamReader_(self, request, stream_reader_):
-        return class_mock(
-            request, "docx.image.jpeg.StreamReader", return_value=stream_reader_
-        )
+        return class_mock(request, "docx.image.jpeg.StreamReader", return_value=stream_reader_)
 
     @pytest.fixture
     def stream_reader_(self, request):
         return instance_mock(request, StreamReader)
-
-
-class TestJpegMethods:
-    def test_get_horz_dpi_and_vert_dpi_from_app0(self, mocker):
-        markers = MagicMock()
-        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(96, 96))
-        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
-        assert horz_dpi == 96
-        assert vert_dpi == 96
-
-    def test_get_horz_dpi_and_vert_dpi_from_app0_but_return_zero(self, mocker):
-        markers = MagicMock()
-        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(0, 0))
-        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
-        assert horz_dpi == 72
-        assert vert_dpi == 72
-
-
-    def test_get_horz_dpi_and_vert_dpi_from_app1(self, mocker):
-        markers = MagicMock()
-        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(None, None))
-        mocker.patch.object(Jpeg, "_try_get_dpi_from_app1", return_value=(96, 96))
-        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
-        assert horz_dpi == 96
-        assert vert_dpi == 96
-
-    def test_get_horz_dpi_and_vert_dpi_from_app1_but_return_zero(self, mocker):
-        markers = MagicMock()
-        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(None, None))
-        mocker.patch.object(Jpeg, "_try_get_dpi_from_app1", return_value=(0, 0))
-        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
-        assert horz_dpi == 72
-        assert vert_dpi == 72
-
-    def test_get_horz_dpi_and_vert_dpi_from_DEFAULT_DPI(self, mocker):
-        markers = MagicMock()
-        mocker.patch.object(Jpeg, "_try_get_dpi_from_app0", return_value=(None, None))
-        mocker.patch.object(Jpeg, "_try_get_dpi_from_app1", return_value=(None, None))
-        horz_dpi,vert_dpi = Jpeg._get_horz_dpi_and_vert_dpi(markers)
-        assert horz_dpi == 72
-        assert vert_dpi == 72
-
-    def test__try_get_dpi_from_app0_returns_None(self, mocker):
-        markers = MagicMock()
-        type(markers).app0 = PropertyMock(side_effect=KeyError("APP0 not found"))
-        horz_dpi,vert_dpi = Jpeg._try_get_dpi_from_app0(markers)
-        assert horz_dpi is None
-        assert vert_dpi is None
-
-    def test__try_get_dpi_from_app0(self, mocker):
-        markers = MagicMock()
-        markers.app0.horz_dpi = 96
-        markers.app0.vert_dpi = 96
-        horz_dpi,vert_dpi = Jpeg._try_get_dpi_from_app0(markers)
-        assert horz_dpi == 96
-        assert vert_dpi == 96
-
-    def test__try_get_dpi_from_app1_returns_None(self, mocker):
-        markers = MagicMock()
-        type(markers).app1 = PropertyMock(side_effect=KeyError("APP1 not found"))
-        horz_dpi,vert_dpi = Jpeg._try_get_dpi_from_app1(markers)
-        assert horz_dpi is None
-        assert vert_dpi is None
-
-    def test__try_get_dpi_from_app1(self, mocker):
-        markers = MagicMock()
-        markers.app1.horz_dpi = 96
-        markers.app1.vert_dpi = 96
-        horz_dpi,vert_dpi = Jpeg._try_get_dpi_from_app1(markers)
-        assert horz_dpi == 96
-        assert vert_dpi == 96

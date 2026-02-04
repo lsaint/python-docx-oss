@@ -1,23 +1,20 @@
-# encoding: utf-8
+"""Unit test suite for docx.image.png module."""
 
-"""Unit test suite for docx.image.png module"""
-
-from __future__ import absolute_import, print_function
+import io
 
 import pytest
 
-from docx.compat import BytesIO
 from docx.image.constants import MIME_TYPE, PNG_CHUNK_TYPE
 from docx.image.exceptions import InvalidImageStreamError
 from docx.image.helpers import BIG_ENDIAN, StreamReader
 from docx.image.png import (
+    Png,
     _Chunk,
-    _Chunks,
     _ChunkFactory,
     _ChunkParser,
+    _Chunks,
     _IHDRChunk,
     _pHYsChunk,
-    Png,
     _PngParser,
 )
 
@@ -32,10 +29,8 @@ from ..unitutil.mock import (
 )
 
 
-class DescribePng(object):
-    def it_can_construct_from_a_png_stream(
-        self, stream_, _PngParser_, png_parser_, Png__init__
-    ):
+class DescribePng:
+    def it_can_construct_from_a_png_stream(self, stream_, _PngParser_, png_parser_, Png__init__):
         px_width, px_height, horz_dpi, vert_dpi = 42, 24, 36, 63
         png_parser_.px_width = px_width
         png_parser_.px_height = px_height
@@ -45,9 +40,7 @@ class DescribePng(object):
         png = Png.from_stream(stream_)
 
         _PngParser_.parse.assert_called_once_with(stream_)
-        Png__init__.assert_called_once_with(
-            ANY, px_width, px_height, horz_dpi, vert_dpi
-        )
+        Png__init__.assert_called_once_with(ANY, px_width, px_height, horz_dpi, vert_dpi)
         assert isinstance(png, Png)
 
     def it_knows_its_content_type(self):
@@ -76,10 +69,10 @@ class DescribePng(object):
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
 
-class Describe_PngParser(object):
+class Describe_PngParser:
     def it_can_parse_the_headers_of_a_PNG_stream(
         self, stream_, _Chunks_, _PngParser__init_, chunks_
     ):
@@ -156,13 +149,11 @@ class Describe_PngParser(object):
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
 
-class Describe_Chunks(object):
-    def it_can_construct_from_a_stream(
-        self, stream_, _ChunkParser_, chunk_parser_, _Chunks__init_
-    ):
+class Describe_Chunks:
+    def it_can_construct_from_a_stream(self, stream_, _ChunkParser_, chunk_parser_, _Chunks__init_):
         chunk_lst = [1, 2]
         chunk_parser_.iter_chunks.return_value = iter(chunk_lst)
 
@@ -175,7 +166,7 @@ class Describe_Chunks(object):
 
     def it_provides_access_to_the_IHDR_chunk(self, IHDR_fixture):
         chunks, IHDR_chunk_ = IHDR_fixture
-        assert chunks.IHDR == IHDR_chunk_
+        assert IHDR_chunk_ == chunks.IHDR
 
     def it_provides_access_to_the_pHYs_chunk(self, pHYs_fixture):
         chunks, expected_chunk = pHYs_fixture
@@ -234,10 +225,10 @@ class Describe_Chunks(object):
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
 
-class Describe_ChunkParser(object):
+class Describe_ChunkParser:
     def it_can_construct_from_a_stream(
         self, stream_, StreamReader_, stream_rdr_, _ChunkParser__init_
     ):
@@ -254,7 +245,7 @@ class Describe_ChunkParser(object):
         chunk_lst = [chunk_, chunk_2_]
         chunk_parser = _ChunkParser(stream_rdr_)
 
-        chunks = [chunk for chunk in chunk_parser.iter_chunks()]
+        chunks = list(chunk_parser.iter_chunks())
 
         _iter_chunk_offsets_.assert_called_once_with(chunk_parser)
         assert _ChunkFactory_.call_args_list == [
@@ -265,7 +256,7 @@ class Describe_ChunkParser(object):
 
     def it_iterates_over_the_chunk_offsets_to_help_parse(self, iter_offsets_fixture):
         chunk_parser, expected_chunk_offsets = iter_offsets_fixture
-        chunk_offsets = [co for co in chunk_parser._iter_chunk_offsets()]
+        chunk_offsets = list(chunk_parser._iter_chunk_offsets())
         assert chunk_offsets == expected_chunk_offsets
 
     # fixtures -------------------------------------------------------
@@ -280,9 +271,7 @@ class Describe_ChunkParser(object):
 
     @pytest.fixture
     def _ChunkFactory_(self, request, chunk_lst_):
-        return function_mock(
-            request, "docx.image.png._ChunkFactory", side_effect=chunk_lst_
-        )
+        return function_mock(request, "docx.image.png._ChunkFactory", side_effect=chunk_lst_)
 
     @pytest.fixture
     def chunk_lst_(self, chunk_, chunk_2_):
@@ -308,7 +297,7 @@ class Describe_ChunkParser(object):
     @pytest.fixture
     def iter_offsets_fixture(self):
         bytes_ = b"-filler-\x00\x00\x00\x00IHDRxxxx\x00\x00\x00\x00IEND"
-        stream_rdr = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        stream_rdr = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
         chunk_parser = _ChunkParser(stream_rdr)
         expected_chunk_offsets = [
             (PNG_CHUNK_TYPE.IHDR, 16),
@@ -318,20 +307,18 @@ class Describe_ChunkParser(object):
 
     @pytest.fixture
     def StreamReader_(self, request, stream_rdr_):
-        return class_mock(
-            request, "docx.image.png.StreamReader", return_value=stream_rdr_
-        )
+        return class_mock(request, "docx.image.png.StreamReader", return_value=stream_rdr_)
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
     @pytest.fixture
     def stream_rdr_(self, request):
         return instance_mock(request, StreamReader)
 
 
-class Describe_ChunkFactory(object):
+class Describe_ChunkFactory:
     def it_constructs_the_appropriate_Chunk_subclass(self, call_fixture):
         chunk_type, stream_rdr_, offset, chunk_cls_ = call_fixture
         chunk = _ChunkFactory(chunk_type, stream_rdr_, offset)
@@ -392,7 +379,7 @@ class Describe_ChunkFactory(object):
         return instance_mock(request, StreamReader)
 
 
-class Describe_Chunk(object):
+class Describe_Chunk:
     def it_can_construct_from_a_stream_and_offset(self):
         chunk_type = "fOOB"
         chunk = _Chunk.from_offset(chunk_type, None, None)
@@ -400,7 +387,7 @@ class Describe_Chunk(object):
         assert chunk.type_name == chunk_type
 
 
-class Describe_IHDRChunk(object):
+class Describe_IHDRChunk:
     def it_can_construct_from_a_stream_and_offset(self, from_offset_fixture):
         stream_rdr, offset, px_width, px_height = from_offset_fixture
         ihdr_chunk = _IHDRChunk.from_offset(None, stream_rdr, offset)
@@ -412,13 +399,13 @@ class Describe_IHDRChunk(object):
 
     @pytest.fixture
     def from_offset_fixture(self):
-        bytes_ = b"\x00\x00\x00\x2A\x00\x00\x00\x18"
-        stream_rdr = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        bytes_ = b"\x00\x00\x00\x2a\x00\x00\x00\x18"
+        stream_rdr = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
         offset, px_width, px_height = 0, 42, 24
         return stream_rdr, offset, px_width, px_height
 
 
-class Describe_pHYsChunk(object):
+class Describe_pHYsChunk:
     def it_can_construct_from_a_stream_and_offset(self, from_offset_fixture):
         stream_rdr, offset = from_offset_fixture[:2]
         horz_px_per_unit, vert_px_per_unit = from_offset_fixture[2:4]
@@ -433,7 +420,7 @@ class Describe_pHYsChunk(object):
 
     @pytest.fixture
     def from_offset_fixture(self):
-        bytes_ = b"\x00\x00\x00\x2A\x00\x00\x00\x18\x01"
-        stream_rdr = StreamReader(BytesIO(bytes_), BIG_ENDIAN)
+        bytes_ = b"\x00\x00\x00\x2a\x00\x00\x00\x18\x01"
+        stream_rdr = StreamReader(io.BytesIO(bytes_), BIG_ENDIAN)
         offset, horz_px_per_unit, vert_px_per_unit, units_specifier = (0, 42, 24, 1)
         return (stream_rdr, offset, horz_px_per_unit, vert_px_per_unit, units_specifier)

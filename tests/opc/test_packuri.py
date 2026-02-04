@@ -1,19 +1,15 @@
-# encoding: utf-8
-
-"""
-Test suite for the docx.opc.packuri module
-"""
+"""Test suite for the docx.opc.packuri module."""
 
 import pytest
 
 from docx.opc.packuri import PackURI
 
 
-class DescribePackURI(object):
+class DescribePackURI:
     def cases(self, expected_values):
         """
         Return list of tuples zipped from uri_str cases and
-        *expected_values*. Raise if lengths don't match.
+        `expected_values`. Raise if lengths don't match.
         """
         uri_str_cases = [
             "/",
@@ -33,7 +29,7 @@ class DescribePackURI(object):
         assert pack_uri == "/ppt/slideLayouts/slideLayout1.xml"
 
     def it_should_raise_on_construct_with_bad_pack_uri_str(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="PackURI must begin with slash"):
             PackURI("foobar")
 
     def it_can_calculate_baseURI(self):

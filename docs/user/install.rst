@@ -26,5 +26,5 @@ but if you use this last method you will need to install those yourself.
 Dependencies
 ------------
 
-* Python >= 3.10
+* Python >= 3.12
 * lxml >= 4.6.5

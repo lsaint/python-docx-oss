@@ -1,10 +1,4 @@
-# encoding: utf-8
-
-"""
-Step implementations for paragraph format-related features.
-"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Step implementations for paragraph format-related features."""
 
 from behave import given, then, when
 
@@ -14,7 +8,6 @@ from docx.shared import Pt
 from docx.text.tabstops import TabStops
 
 from helpers import test_docx
-
 
 # given ===================================================
 
@@ -167,9 +160,7 @@ def then_paragraph_format_alignment_is_value(context, value):
 
 @then("paragraph_format.line_spacing is {value}")
 def then_paragraph_format_line_spacing_is_value(context, value):
-    expected_value = (
-        None if value == "None" else float(value) if "." in value else int(value)
-    )
+    expected_value = None if value == "None" else float(value) if "." in value else int(value)
     paragraph_format = context.paragraph_format
 
     if expected_value is None or isinstance(expected_value, int):

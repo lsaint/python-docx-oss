@@ -155,6 +155,18 @@ rst_epilog = """
 .. |True| replace:: :class:`True`
 
 .. |ValueError| replace:: :class:`ValueError`
+
+.. |CharacterStyle| replace:: :class:`.CharacterStyle`
+
+.. |Comment| replace:: :class:`.Comment`
+
+.. |Comments| replace:: :class:`.Comments`
+
+.. |Hyperlink| replace:: :class:`.Hyperlink`
+
+.. |ParagraphStyle| replace:: :class:`.ParagraphStyle`
+
+.. |RenderedPageBreak| replace:: :class:`.RenderedPageBreak`
 """
 
 # -- General configuration ---------------------------------------------------

@@ -1,6 +1,7 @@
-"""
-Unit test suite for the docx.opc.rel module
-"""
+# pyright: reportPrivateUsage=false
+
+"""Unit test suite for the docx.opc.rel module."""
+
 import pytest
 
 from docx.opc.oxml import CT_Relationships
@@ -8,11 +9,10 @@ from docx.opc.packuri import PackURI
 from docx.opc.part import Part
 from docx.opc.rel import Relationships, _Relationship
 
-from ..unitutil.mock import (Mock, PropertyMock, call, class_mock,
-                             instance_mock, patch)
+from ..unitutil.mock import Mock, PropertyMock, call, class_mock, instance_mock, patch
 
 
-class Describe_Relationship(object):
+class Describe_Relationship:
     def it_remembers_construction_values(self):
         # test data --------------------
         rId = "rId9"
@@ -29,7 +29,7 @@ class Describe_Relationship(object):
 
     def it_should_raise_on_target_part_access_on_external_rel(self):
         rel = _Relationship(None, None, None, None, external=True)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="target_part property on _Relat"):
             rel.target_part
 
     def it_should_have_target_ref_for_external_rel(self):
@@ -42,9 +42,9 @@ class Describe_Relationship(object):
         rel.target_ref = new_target
         assert rel.target_ref == new_target
 
-    def it_raises_on_chaged_internal_rel(self):
+    def it_raises_on_changed_internal_rel(self):
         rel = _Relationship(None, None, "internal_target1", None, external=False)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="can not set internal target_ref"):
             rel.target_ref = "t2"
 
     def it_should_have_relative_ref_for_internal_rel(self):
@@ -59,7 +59,7 @@ class Describe_Relationship(object):
         assert rel.target_ref == "../media/image1.png"
 
 
-class DescribeRelationships(object):
+class DescribeRelationships:
     def it_can_add_a_relationship(self, _Relationship_):
         baseURI, rId, reltype, target, external = (
             "baseURI",
@@ -88,19 +88,14 @@ class DescribeRelationships(object):
         rels["foobar"] = rel
         assert rels["foobar"] == rel
 
-    def it_can_find_or_add_a_relationship(
-        self, rels_with_matching_rel_, rels_with_missing_rel_
-    ):
-
+    def it_can_find_or_add_a_relationship(self, rels_with_matching_rel_, rels_with_missing_rel_):
         rels, reltype, part, matching_rel = rels_with_matching_rel_
         assert rels.get_or_add(reltype, part) == matching_rel
 
         rels, reltype, part, new_rel = rels_with_missing_rel_
         assert rels.get_or_add(reltype, part) == new_rel
 
-    def it_can_find_or_add_an_external_relationship(
-        self, add_matching_ext_rel_fixture_
-    ):
+    def it_can_find_or_add_an_external_relationship(self, add_matching_ext_rel_fixture_):
         rels, reltype, url, rId = add_matching_ext_rel_fixture_
         _rId = rels.get_or_add_ext_rel(reltype, url)
         assert _rId == rId
@@ -119,6 +114,11 @@ class DescribeRelationships(object):
         rels, reltype, known_target_part = rels_with_target_known_by_reltype
         part = rels.part_with_reltype(reltype)
         assert part is known_target_part
+
+    def it_can_find_related_parts_by_reltype(self, rels_with_targets_known_by_reltype):
+        rels, reltype, known_target_parts = rels_with_targets_known_by_reltype
+        parts = rels.parts_with_reltype(reltype)
+        assert parts == known_target_parts
 
     def it_can_compose_rels_xml(self, rels, rels_elm):
         # exercise ---------------------
@@ -146,7 +146,7 @@ class DescribeRelationships(object):
         return rels, reltype, url
 
     @pytest.fixture
-    def add_matching_ext_rel_fixture_(self, reltype, url):
+    def add_matching_ext_rel_fixture_(self, request, reltype, url):
         rId = "rId369"
         rels = Relationships(None)
         rels.add_relationship(reltype, url, rId, is_external=True)
@@ -186,7 +186,7 @@ class DescribeRelationships(object):
         return rels
 
     @pytest.fixture
-    def rels_elm(self, request):
+    def rels_elm(self):
         """
         Return a rels_elm mock that will be returned from
         CT_Relationships.new()
@@ -200,8 +200,8 @@ class DescribeRelationships(object):
         # patch CT_Relationships to return that rels_elm
         patch_ = patch.object(CT_Relationships, "new", return_value=rels_elm)
         patch_.start()
-        request.addfinalizer(patch_.stop)
-        return rels_elm
+        yield rels_elm
+        patch_.stop()
 
     @pytest.fixture
     def _rel_with_known_target_part(self, _rId, reltype, _target_part, _baseURI):
@@ -210,7 +210,7 @@ class DescribeRelationships(object):
 
     @pytest.fixture
     def rels_with_known_target_part(self, rels, _rel_with_known_target_part):
-        _, rId, target_part = _rel_with_known_target_part
+        rel, rId, target_part = _rel_with_known_target_part
         rels.add_relationship(None, target_part, rId)
         return rels, rId, target_part
 
@@ -247,23 +247,24 @@ class DescribeRelationships(object):
     @pytest.fixture
     def rels_with_rId_gap(self, request):
         rels = Relationships(None)
-        rel_with_rId1 = instance_mock(
-            request, _Relationship, name="rel_with_rId1", rId="rId1"
-        )
-        rel_with_rId3 = instance_mock(
-            request, _Relationship, name="rel_with_rId3", rId="rId3"
-        )
+        rel_with_rId1 = instance_mock(request, _Relationship, name="rel_with_rId1", rId="rId1")
+        rel_with_rId3 = instance_mock(request, _Relationship, name="rel_with_rId3", rId="rId3")
         rels["rId1"] = rel_with_rId1
         rels["rId3"] = rel_with_rId3
         return rels, "rId2"
 
     @pytest.fixture
-    def rels_with_target_known_by_reltype(
-        self, rels, _rel_with_target_known_by_reltype
-    ):
+    def rels_with_target_known_by_reltype(self, rels, _rel_with_target_known_by_reltype):
         rel, reltype, target_part = _rel_with_target_known_by_reltype
         rels[1] = rel
         return rels, reltype, target_part
+
+    @pytest.fixture
+    def rels_with_targets_known_by_reltype(self, rels, _rel_with_target_known_by_reltype, _target_part):
+        rel, reltype, _ = _rel_with_target_known_by_reltype
+        rels[1] = rel
+        rels[2] = _Relationship("rId7", reltype, _target_part, "baseURI")
+        return rels, reltype, [rel.target_part, _target_part]
 
     @pytest.fixture
     def reltype(self):

@@ -1,21 +1,20 @@
-"""
-Test suite for the docx.oxml.text.run module.
-"""
+"""Test suite for the docx.oxml.text.run module."""
+
+from typing import cast
+
 import pytest
+
+from docx.oxml.text.run import CT_R
 
 from ...unitutil.cxml import element, xml
 
 
-class DescribeCT_R(object):
-    def it_can_add_a_t_preserving_edge_whitespace(self, add_t_fixture):
-        r, text, expected_xml = add_t_fixture
-        r.add_t(text)
-        assert r.xml == expected_xml
+class DescribeCT_R:
+    """Unit-test suite for the CT_R (run, <w:r>) element."""
 
-    # fixtures -------------------------------------------------------
-
-    @pytest.fixture(
-        params=[
+    @pytest.mark.parametrize(
+        ("initial_cxml", "text", "expected_cxml"),
+        [
             ("w:r", "foobar", 'w:r/w:t"foobar"'),
             ("w:r", "foobar ", 'w:r/w:t{xml:space=preserve}"foobar "'),
             (
@@ -23,43 +22,29 @@ class DescribeCT_R(object):
                 "foobar",
                 'w:r/(w:rPr/w:rStyle{w:val=emphasis}, w:cr, w:t"foobar")',
             ),
-        ]
+        ],
     )
-    def add_t_fixture(self, request):
-        initial_cxml, text, expected_cxml = request.param
-        r = element(initial_cxml)
+    def it_can_add_a_t_preserving_edge_whitespace(
+        self, initial_cxml: str, text: str, expected_cxml: str
+    ):
+        r = cast(CT_R, element(initial_cxml))
         expected_xml = xml(expected_cxml)
-        return r, text, expected_xml
 
+        r.add_t(text)
 
-class TestCT_R:
-    def test_texts(self, texts_item):
-        element, ret = texts_item
-        assert element.texts == ret
+        assert r.xml == expected_xml
 
-    def test_itertext(self, itertext_item):
-        element, ret = itertext_item
-        assert "".join(element.itertext()) == ret
+    def it_can_assemble_the_text_in_the_run(self):
+        cxml = 'w:r/(w:br,w:cr,w:noBreakHyphen,w:ptab,w:t"foobar",w:tab)'
+        r = cast(CT_R, element(cxml))
 
-    def load_params(self, request):
-        xml, expected_text = request.param
-        ctr = element(xml)
-        return ctr, expected_text
+        assert r.text == "\n\n-\tfoobar\t"
 
-    @pytest.fixture(
-        params=[
-            ('w:r/w:t"foobar"', "foobar"),
-            ('w:r/(w:t"abc", w:tab, w:t"def", w:cr)', "abcdef"),
-        ]
-    )
-    def itertext_item(self, request):
-        return self.load_params(request)
+    def it_provides_texts_alias_for_text(self):
+        r = cast(CT_R, element('w:r/w:t"alias"'))
 
-    @pytest.fixture(
-        params=[
-            ('w:r/w:t"foobar"', "foobar"),
-            ('w:r/(w:t"abc", w:tab, w:t"def", w:cr)', "abc\tdef\n"),
-        ]
-    )
-    def texts_item(self, request):
-        return self.load_params(request)
+        assert r.texts == "alias"
+
+        r.texts = "updated"
+
+        assert r.text == "updated"

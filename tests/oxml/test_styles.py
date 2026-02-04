@@ -1,10 +1,4 @@
-# encoding: utf-8
-
-"""
-Test suite for the docx.oxml.styles module.
-"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Test suite for the docx.oxml.styles module."""
 
 import pytest
 
@@ -13,7 +7,7 @@ from docx.enum.style import WD_STYLE_TYPE
 from ..unitutil.cxml import element, xml
 
 
-class DescribeCT_Styles(object):
+class DescribeCT_Styles:
     def it_can_add_a_style_of_type(self, add_fixture):
         styles, name, style_type, builtin, expected_xml = add_fixture
         style = styles.add_style_of_type(name, style_type, builtin)
@@ -37,8 +31,7 @@ class DescribeCT_Styles(object):
                 "heading 1",
                 WD_STYLE_TYPE.PARAGRAPH,
                 True,
-                "w:styles/w:style{w:type=paragraph,w:styleId=Heading1}/w:name{w:val"
-                "=heading 1}",
+                "w:styles/w:style{w:type=paragraph,w:styleId=Heading1}/w:name{w:val=heading 1}",
             ),
         ]
     )

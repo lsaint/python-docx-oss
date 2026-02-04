@@ -1,24 +1,17 @@
-# encoding: utf-8
+"""Test suite for docx.text.parfmt module, containing the ParagraphFormat object."""
 
-"""
-Test suite for the docx.text.parfmt module, containing the ParagraphFormat
-object.
-"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+import pytest
 
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.shared import Pt
 from docx.text.parfmt import ParagraphFormat
 from docx.text.tabstops import TabStops
 
-import pytest
-
 from ..unitutil.cxml import element, xml
 from ..unitutil.mock import class_mock, instance_mock
 
 
-class DescribeParagraphFormat(object):
+class DescribeParagraphFormat:
     def it_knows_its_alignment_value(self, alignment_get_fixture):
         paragraph_format, expected_value = alignment_get_fixture
         assert paragraph_format.alignment == expected_value

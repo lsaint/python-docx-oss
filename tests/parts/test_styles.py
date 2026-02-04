@@ -1,10 +1,4 @@
-# encoding: utf-8
-
-"""
-Test suite for the docx.parts.styles module
-"""
-
-from __future__ import absolute_import, print_function, unicode_literals
+"""Test suite for the docx.parts.styles module."""
 
 import pytest
 
@@ -17,7 +11,7 @@ from docx.styles.styles import Styles
 from ..unitutil.mock import class_mock, instance_mock
 
 
-class DescribeStylesPart(object):
+class DescribeStylesPart:
     def it_provides_access_to_its_styles(self, styles_fixture):
         styles_part, Styles_, styles_ = styles_fixture
         styles = styles_part.styles

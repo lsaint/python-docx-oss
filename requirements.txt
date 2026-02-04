@@ -1,2 +1,2 @@
 lxml>=4.6.5
-pyparsing>=2.4.7
+typing-extensions

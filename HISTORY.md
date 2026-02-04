@@ -1,5 +1,10 @@
 ## Release History
 
+0.1.0 (2026-02-02)
+
+- UPSTREAM MERGE with python-docx 1.2.0.
+- Backward Compatibility: Fixed a regression where `Font.name` returned a dictionary. It now correctly returns a string (ASCII name) while supporting multi-script assignment via setter. Added `Font.eastAsia` and `Font.hAnsi` properties for fine-grained font control.
+
 0.0.12 (2025-12-03)
 
 - default dpi for jpeg #33

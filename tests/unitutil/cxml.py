@@ -1,51 +1,43 @@
-# encoding: utf-8
-
 """Parser for Compact XML Expression Language (CXEL) ('see-ex-ell').
 
 CXEL is a compact XML specification language I made up that's useful for producing XML
 element trees suitable for unit testing.
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from pyparsing import (
-    alphas,
-    alphanums,
     Combine,
-    dblQuotedString,
-    delimitedList,
+    DelimitedList,
     Forward,
     Group,
     Literal,
     Optional,
-    removeQuotes,
-    stringEnd,
     Suppress,
     Word,
+    alphanums,
+    alphas,
+    dblQuotedString,
+    quotedString,
+    removeQuotes,
+    stringEnd,
 )
 
-from docx.oxml import parse_xml
 from docx.oxml.ns import nsmap
-
+from docx.oxml.parser import parse_xml
 
 # ====================================================================
 # api functions
 # ====================================================================
 
 
-def element(cxel_str):
-    """
-    Return an oxml element parsed from the XML generated from *cxel_str*.
-    """
+def element(cxel_str: str):
+    """Return an oxml element parsed from the XML generated from `cxel_str`."""
     _xml = xml(cxel_str)
     return parse_xml(_xml)
 
 
-def xml(cxel_str):
-    """
-    Return the XML generated from *cxel_str*.
-    """
-    root_token = root_node.parseString(cxel_str)
+def xml(cxel_str: str) -> str:
+    """Return the XML generated from `cxel_str`."""
+    root_token = root_node.parse_string(cxel_str)
     xml = root_token.element.xml
     return xml
 
@@ -56,17 +48,14 @@ def xml(cxel_str):
 
 
 def nsdecls(*nspfxs):
-    """
-    Return a string containing a namespace declaration for each of *nspfxs*,
-    in the order they are specified.
-    """
+    """Namespace-declaration including each of `nspfxs`, in the order specified."""
     nsdecls = ""
     for nspfx in nspfxs:
         nsdecls += ' xmlns:%s="%s"' % (nspfx, nsmap[nspfx])
     return nsdecls
 
 
-class Element(object):
+class Element:
     """
     Represents an XML element, having a namespace, tagname, attributes, and
     may contain either text or children (but not both) or may be empty.
@@ -88,7 +77,7 @@ class Element(object):
 
     def connect_children(self, child_node_list):
         """
-        Make each of the elements appearing in *child_node_list* a child of
+        Make each of the elements appearing in `child_node_list` a child of
         this element.
         """
         for node in child_node_list:
@@ -101,7 +90,7 @@ class Element(object):
         Return an ``Element`` object constructed from a parser element token.
         """
         tagname = token.tagname
-        attrs = [(name, value) for name, value in token.attr_list]
+        attrs = [tuple(a) for a in token.attr_list]
         text = token.text
         return cls(tagname, attrs, text)
 
@@ -170,7 +159,7 @@ class Element(object):
     def _xml(self, indent):
         """
         Return a string containing the XML of this element and all its
-        children with a starting indent of *indent* spaces.
+        children with a starting indent of `indent` spaces.
         """
         self._indent_str = " " * indent
         xml = self._start_tag
@@ -253,32 +242,30 @@ def grammar():
 
     # np:attr_name=attr_val ----------------------
     attr_name = Word(alphas + ":")
-    attr_val = Word(alphanums + " %-./:_")
+    attr_val = Word(alphanums + " %-./:_") | quotedString.set_parse_action(removeQuotes)
     attr_def = Group(attr_name + equal + attr_val)
-    attr_list = open_brace + delimitedList(attr_def) + close_brace
+    attr_list = open_brace + DelimitedList(attr_def) + close_brace
 
-    text = dblQuotedString.setParseAction(removeQuotes)
+    text = dblQuotedString.set_parse_action(removeQuotes)
 
     # w:jc{val=right} ----------------------------
     element = (
         tagname("tagname")
         + Group(Optional(attr_list))("attr_list")
         + Optional(text, default="")("text")
-    ).setParseAction(Element.from_token)
+    ).set_parse_action(Element.from_token)
 
     child_node_list = Forward()
 
     node = Group(
         element("element") + Group(Optional(slash + child_node_list))("child_node_list")
-    ).setParseAction(connect_node_children)
+    ).set_parse_action(connect_node_children)
 
-    child_node_list << (open_paren + delimitedList(node) + close_paren | node)
+    child_node_list << (open_paren + DelimitedList(node) + close_paren | node)
 
     root_node = (
-        element("element")
-        + Group(Optional(slash + child_node_list))("child_node_list")
-        + stringEnd
-    ).setParseAction(connect_root_node_children)
+        element("element") + Group(Optional(slash + child_node_list))("child_node_list") + stringEnd
+    ).set_parse_action(connect_root_node_children)
 
     return root_node
 

@@ -1,24 +1,17 @@
-# encoding: utf-8
-
-"""
-Step implementations for document-related features
-"""
-
-from __future__ import absolute_import, print_function, unicode_literals
+"""Step implementations for document-related features."""
 
 from behave import given, then, when
 
 from docx import Document
 from docx.enum.section import WD_ORIENT, WD_SECTION
+from docx.section import Sections
 from docx.shape import InlineShapes
 from docx.shared import Inches
-from docx.section import Sections
 from docx.styles.styles import Styles
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 
 from helpers import test_docx, test_file
-
 
 # given ===================================================
 
@@ -133,17 +126,13 @@ def when_add_picture_specifying_width_and_height(context):
 @when("I add a picture specifying a height of 1.5 inches")
 def when_add_picture_specifying_height(context):
     document = context.document
-    context.picture = document.add_picture(
-        test_file("monty-truth.png"), height=Inches(1.5)
-    )
+    context.picture = document.add_picture(test_file("monty-truth.png"), height=Inches(1.5))
 
 
 @when("I add a picture specifying a width of 1.5 inches")
 def when_add_picture_specifying_width(context):
     document = context.document
-    context.picture = document.add_picture(
-        test_file("monty-truth.png"), width=Inches(1.5)
-    )
+    context.picture = document.add_picture(test_file("monty-truth.png"), width=Inches(1.5))
 
 
 @when("I add a picture specifying only the image file")

@@ -1,10 +1,4 @@
-# encoding: utf-8
-
-"""
-Step implementations for font-related features.
-"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Step implementations for font-related features."""
 
 from behave import given, then, when
 
@@ -15,7 +9,6 @@ from docx.enum.text import WD_COLOR_INDEX, WD_UNDERLINE
 from docx.shared import RGBColor
 
 from helpers import test_docx
-
 
 # given ===================================================
 
@@ -195,13 +188,15 @@ def then_font_highlight_color_is_value(context, value):
 @then("font.name is {value}")
 def then_font_name_is_value(context, value):
     font = context.font
-    fontname = font.name
-    if isinstance(fontname, dict):
-        # word started differentiating typefaces for different regions of the world in 2025
-        # font.name is a dict of typeface names for different scripts
-        fontname = font.name['ascii']  # test against ascii name
-    value = None if value == "None" else value
-    assert fontname == value, f"expected '{value}', got '{fontname}'"
+    expected_value = None if value == "None" else value
+    actual_value = font.name
+    if isinstance(actual_value, dict):
+        if expected_value is None:
+            assert all(v is None for v in actual_value.values())
+        else:
+            assert actual_value["ascii"] == expected_value
+    else:
+        assert actual_value == expected_value
 
 
 @then("font.size is {value}")

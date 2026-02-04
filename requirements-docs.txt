@@ -1,0 +1,6 @@
+Sphinx>=7.0.0
+sphinx-book-theme
+Jinja2>=3.1.2
+MarkupSafe>=2.1.2
+alabaster>=0.7.12
+-e .

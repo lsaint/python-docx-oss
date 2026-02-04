@@ -1,41 +1,30 @@
-# encoding: utf-8
-
-"""
-Test suite for docx.opc.phys_pkg module
-"""
-
-from __future__ import absolute_import
-
-try:
-    from io import BytesIO  # Python 3
-except ImportError:
-    from StringIO import StringIO as BytesIO
+"""Test suite for docx.opc.phys_pkg module."""
 
 import hashlib
-import pytest
-
+import io
 from zipfile import ZIP_DEFLATED, ZipFile
+
+import pytest
 
 from docx.opc.exceptions import PackageNotFoundError
 from docx.opc.packuri import PACKAGE_URI, PackURI
 from docx.opc.phys_pkg import (
-    _DirPkgReader,
     PhysPkgReader,
     PhysPkgWriter,
+    _DirPkgReader,
     _ZipPkgReader,
     _ZipPkgWriter,
 )
 
-from ..unitutil.file import absjoin, testfile_dir
-from ..unitutil.mock import class_mock, loose_mock, Mock
+from ..unitutil.file import absjoin, test_file_dir
+from ..unitutil.mock import Mock, class_mock, loose_mock
 
-
-test_docx_path = absjoin(testfile_dir, "test.docx")
-dir_pkg_path = absjoin(testfile_dir, "expanded_docx")
+test_docx_path = absjoin(test_file_dir, "test.docx")
+dir_pkg_path = absjoin(test_file_dir, "expanded_docx")
 zip_pkg_path = test_docx_path
 
 
-class DescribeDirPkgReader(object):
+class DescribeDirPkgReader:
     def it_is_used_by_PhysPkgReader_when_pkg_is_a_dir(self):
         phys_reader = PhysPkgReader(dir_pkg_path)
         assert isinstance(phys_reader, _DirPkgReader)
@@ -74,13 +63,13 @@ class DescribeDirPkgReader(object):
         return _DirPkgReader(dir_pkg_path)
 
 
-class DescribePhysPkgReader(object):
+class DescribePhysPkgReader:
     def it_raises_when_pkg_path_is_not_a_package(self):
         with pytest.raises(PackageNotFoundError):
             PhysPkgReader("foobar")
 
 
-class DescribeZipPkgReader(object):
+class DescribeZipPkgReader:
     def it_is_used_by_PhysPkgReader_when_pkg_is_a_zip(self):
         phys_reader = PhysPkgReader(zip_pkg_path)
         assert isinstance(phys_reader, _ZipPkgReader)
@@ -126,17 +115,17 @@ class DescribeZipPkgReader(object):
     # fixtures ---------------------------------------------
 
     @pytest.fixture(scope="class")
-    def phys_reader(self, request):
+    def phys_reader(self):
         phys_reader = _ZipPkgReader(zip_pkg_path)
-        request.addfinalizer(phys_reader.close)
-        return phys_reader
+        yield phys_reader
+        phys_reader.close()
 
     @pytest.fixture
     def pkg_file_(self, request):
         return loose_mock(request)
 
 
-class DescribeZipPkgWriter(object):
+class DescribeZipPkgWriter:
     def it_is_used_by_PhysPkgWriter_unconditionally(self, tmp_docx_path):
         phys_writer = PhysPkgWriter(tmp_docx_path)
         assert isinstance(phys_writer, _ZipPkgWriter)
@@ -174,10 +163,10 @@ class DescribeZipPkgWriter(object):
     # fixtures ---------------------------------------------
 
     @pytest.fixture
-    def pkg_file(self, request):
-        pkg_file = BytesIO()
-        request.addfinalizer(pkg_file.close)
-        return pkg_file
+    def pkg_file(self):
+        pkg_file = io.BytesIO()
+        yield pkg_file
+        pkg_file.close()
 
 
 # fixtures -------------------------------------------------

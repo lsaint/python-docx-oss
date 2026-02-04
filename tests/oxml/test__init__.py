@@ -1,33 +1,23 @@
-# encoding: utf-8
-
-"""
-Test suite for pptx.oxml.__init__.py module, primarily XML parser-related.
-"""
-
-from __future__ import print_function, unicode_literals
+"""Test suite for pptx.oxml.__init__.py module, primarily XML parser-related."""
 
 import pytest
-
 from lxml import etree
 
-from docx.oxml import OxmlElement, oxml_parser, parse_xml, register_element_cls
 from docx.oxml.ns import qn
+from docx.oxml.parser import OxmlElement, oxml_parser, parse_xml, register_element_cls
 from docx.oxml.shared import BaseOxmlElement
 
 
-class DescribeOxmlElement(object):
+class DescribeOxmlElement:
     def it_returns_an_lxml_element_with_matching_tag_name(self):
         element = OxmlElement("a:foo")
         assert isinstance(element, etree._Element)
-        assert element.tag == (
-            "{http://schemas.openxmlformats.org/drawingml/2006/main}foo"
-        )
+        assert element.tag == ("{http://schemas.openxmlformats.org/drawingml/2006/main}foo")
 
     def it_adds_supplied_attributes(self):
         element = OxmlElement("a:foo", {"a": "b", "c": "d"})
         assert etree.tostring(element) == (
-            '<a:foo xmlns:a="http://schemas.openxmlformats.org/drawingml/200'
-            '6/main" a="b" c="d"/>'
+            '<a:foo xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" a="b" c="d"/>'
         ).encode("utf-8")
 
     def it_adds_additional_namespace_declarations_when_supplied(self):
@@ -39,7 +29,7 @@ class DescribeOxmlElement(object):
         assert element.nsmap["x"] == ns2
 
 
-class DescribeOxmlParser(object):
+class DescribeOxmlParser:
     def it_strips_whitespace_between_elements(self, whitespace_fixture):
         pretty_xml_text, stripped_xml_text = whitespace_fixture
         element = etree.fromstring(pretty_xml_text, oxml_parser)
@@ -50,12 +40,12 @@ class DescribeOxmlParser(object):
 
     @pytest.fixture
     def whitespace_fixture(self):
-        pretty_xml_text = "<foø>\n" "  <bår>text</bår>\n" "</foø>\n"
+        pretty_xml_text = "<foø>\n  <bår>text</bår>\n</foø>\n"
         stripped_xml_text = "<foø><bår>text</bår></foø>"
         return pretty_xml_text, stripped_xml_text
 
 
-class DescribeParseXml(object):
+class DescribeParseXml:
     def it_accepts_bytes_and_assumes_utf8_encoding(self, xml_bytes):
         parse_xml(xml_bytes)
 
@@ -70,7 +60,7 @@ class DescribeParseXml(object):
         parse_xml(xml_text)
         # but adding encoding in the declaration raises ValueError
         xml_text = "%s\n%s" % (enc_decl, xml_body)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unicode strings with encoding declara"):
             parse_xml(xml_text)
 
     def it_uses_registered_element_classes(self, xml_bytes):
@@ -90,7 +80,7 @@ class DescribeParseXml(object):
         ).encode("utf-8")
 
 
-class DescribeRegisterElementCls(object):
+class DescribeRegisterElementCls:
     def it_determines_class_used_for_elements_with_matching_tagname(self, xml_text):
         register_element_cls("a:foo", CustElmCls)
         foo = parse_xml(xml_text)

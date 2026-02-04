@@ -1,8 +1,4 @@
-# encoding: utf-8
-
-"""
-Step implementations for paragraph-related features
-"""
+"""Step implementations for paragraph-related features."""
 
 from behave import given, then, when
 
@@ -12,7 +8,6 @@ from docx.shared import Inches
 from docx.text.tabstops import TabStop
 
 from helpers import test_docx
-
 
 # given ===================================================
 
@@ -101,7 +96,7 @@ def then_I_can_access_a_tab_stop_by_index(context):
 
 @then("I can iterate the TabStops object")
 def then_I_can_iterate_the_TabStops_object(context):
-    items = [ts for ts in context.tab_stops]
+    items = list(context.tab_stops)
     assert len(items) == 3
     assert all(isinstance(item, TabStop) for item in items)
 

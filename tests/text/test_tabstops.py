@@ -1,23 +1,16 @@
-# encoding: utf-8
+"""Test suite for the docx.text.tabstops module."""
 
-"""
-Test suite for the docx.text.tabstops module, containing the TabStops and
-TabStop objects.
-"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+import pytest
 
 from docx.enum.text import WD_TAB_ALIGNMENT, WD_TAB_LEADER
 from docx.shared import Twips
 from docx.text.tabstops import TabStop, TabStops
 
-import pytest
-
 from ..unitutil.cxml import element, xml
 from ..unitutil.mock import call, class_mock, instance_mock
 
 
-class DescribeTabStop(object):
+class DescribeTabStop:
     def it_knows_its_position(self, position_get_fixture):
         tab_stop, expected_value = position_get_fixture
         assert tab_stop.position == expected_value
@@ -151,7 +144,7 @@ class DescribeTabStop(object):
         return tab_stop, value, tabs, new_idx, expected_xml
 
 
-class DescribeTabStops(object):
+class DescribeTabStops:
     def it_knows_its_length(self, len_fixture):
         tab_stops, expected_value = len_fixture
         assert len(tab_stops) == expected_value

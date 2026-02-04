@@ -115,7 +115,7 @@ core.xml produced by Microsoft Word::
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <dc:title>Core Document Properties Exploration</dc:title>
       <dc:subject>PowerPoint core document properties</dc:subject>
-      <dc:creator>Steve Canny</dc:creator>
+      <dc:creator>Ethan St. Lee</dc:creator>
       <cp:keywords>powerpoint; open xml; dublin core; microsoft office</cp:keywords>
       <dc:description>
         One thing I'd like to discover is just how line wrapping is handled
@@ -123,7 +123,7 @@ core.xml produced by Microsoft Word::
         line._x000d__x000d_This is a second paragraph separated from the
         first by two line feeds.
       </dc:description>
-      <cp:lastModifiedBy>Steve Canny</cp:lastModifiedBy>
+      <cp:lastModifiedBy>Ethan St. Lee</cp:lastModifiedBy>
       <cp:revision>2</cp:revision>
       <dcterms:created xsi:type="dcterms:W3CDTF">2013-04-06T06:03:36Z</dcterms:created>
       <dcterms:modified xsi:type="dcterms:W3CDTF">2013-06-15T06:09:18Z</dcterms:modified>

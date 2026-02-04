@@ -1,17 +1,11 @@
-# encoding: utf-8
-
-"""
-Test suite for the docx.oxml.parts module.
-"""
-
-from __future__ import absolute_import, print_function, unicode_literals
+"""Test suite for the docx.oxml.parts module."""
 
 import pytest
 
 from ...unitutil.cxml import element, xml
 
 
-class DescribeCT_Body(object):
+class DescribeCT_Body:
     def it_can_clear_all_its_content(self, clear_fixture):
         body, expected_xml = clear_fixture
         body.clear_content()
@@ -44,9 +38,6 @@ class DescribeCT_Body(object):
     def section_break_fixture(self):
         body = element("w:body/w:sectPr/w:type{w:val=foobar}")
         expected_xml = xml(
-            "w:body/("
-            "  w:p/w:pPr/w:sectPr/w:type{w:val=foobar},"
-            "  w:sectPr/w:type{w:val=foobar}"
-            ")"
+            "w:body/(w:p/w:pPr/w:sectPr/w:type{w:val=foobar},w:sectPr/w:type{w:val=foobar})"
         )
         return body, expected_xml

@@ -1,19 +1,13 @@
-# encoding: utf-8
-
-"""
-Unit test suite for the docx.styles.latent module
-"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Unit test suite for the docx.styles.latent module."""
 
 import pytest
 
-from docx.styles.latent import _LatentStyle, LatentStyles
+from docx.styles.latent import LatentStyles, _LatentStyle
 
 from ..unitutil.cxml import element, xml
 
 
-class DescribeLatentStyle(object):
+class DescribeLatentStyle:
     def it_can_delete_itself(self, delete_fixture):
         latent_style, latent_styles, expected_xml = delete_fixture
         latent_style.delete()
@@ -135,7 +129,7 @@ class DescribeLatentStyle(object):
         return latent_style, new_value, expected_xml
 
 
-class DescribeLatentStyles(object):
+class DescribeLatentStyles:
     def it_can_add_a_latent_style(self, add_fixture):
         latent_styles, name, expected_xml = add_fixture
 
@@ -151,7 +145,7 @@ class DescribeLatentStyles(object):
 
     def it_can_iterate_over_its_latent_styles(self, iter_fixture):
         latent_styles, expected_count = iter_fixture
-        lst = [ls for ls in latent_styles]
+        lst = list(latent_styles)
         assert len(lst) == expected_count
         for latent_style in lst:
             assert isinstance(latent_style, _LatentStyle)

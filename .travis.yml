@@ -1,7 +1,7 @@
 language: python
 python:
-  - "3.8"
-  - "3.9"
-  - "3.10"
+  - "3.12"
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: pip install -r requirements.txt
-script:  pytest
+# command to run tests, e.g. python setup.py test
+script:  py.test

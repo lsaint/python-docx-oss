@@ -1,23 +1,20 @@
-# encoding: utf-8
-
-"""Unit test suite for docx.parts.image module"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Unit test suite for docx.parts.image module."""
 
 import pytest
 
 from docx.image.image import Image
-from docx.opc.constants import CONTENT_TYPE as CT, RELATIONSHIP_TYPE as RT
+from docx.opc.constants import CONTENT_TYPE as CT
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.opc.packuri import PackURI
 from docx.opc.part import PartFactory
 from docx.package import Package
 from docx.parts.image import ImagePart
 
-from ..unitutil.file import testfile
+from ..unitutil.file import test_file
 from ..unitutil.mock import ANY, initializer_mock, instance_mock, method_mock
 
 
-class DescribeImagePart(object):
+class DescribeImagePart:
     def it_is_used_by_PartFactory_to_construct_image_part(
         self, image_part_load_, partname_, blob_, package_, image_part_
     ):
@@ -27,17 +24,13 @@ class DescribeImagePart(object):
 
         part = PartFactory(partname_, content_type, reltype, blob_, package_)
 
-        image_part_load_.assert_called_once_with(
-            partname_, content_type, blob_, package_
-        )
+        image_part_load_.assert_called_once_with(partname_, content_type, blob_, package_)
         assert part is image_part_
 
     def it_can_construct_from_an_Image_instance(self, image_, partname_, _init_):
         image_part = ImagePart.from_image(image_, partname_)
 
-        _init_.assert_called_once_with(
-            ANY, partname_, image_.content_type, image_.blob, image_
-        )
+        _init_.assert_called_once_with(ANY, partname_, image_.content_type, image_.blob, image_)
         assert isinstance(image_part, ImagePart)
 
     def it_knows_its_default_dimensions_in_EMU(self, dimensions_fixture):
@@ -62,7 +55,7 @@ class DescribeImagePart(object):
 
     @pytest.fixture(params=["loaded", "new"])
     def dimensions_fixture(self, request):
-        image_file_path = testfile("monty-truth.png")
+        image_file_path = test_file("monty-truth.png")
         image = Image.from_file(image_file_path)
         expected_cx, expected_cy = 1905000, 2717800
 

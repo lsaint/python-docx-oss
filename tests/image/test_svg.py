@@ -74,22 +74,21 @@ def unit_value_data(request):
     return request.param
 
 
-def test_parse_svg_unit_value(unit_value_data):
-    value_str, expected_value = unit_value_data
-    assert Svg._parse_svg_unit_value(value_str) == pytest.approx(expected_value)
+class DescribeSvg:
+    def it_parses_svg_unit_values(self, unit_value_data):
+        value_str, expected_value = unit_value_data
+        assert Svg._parse_svg_unit_value(value_str) == pytest.approx(expected_value)
 
+    def it_gets_dimensions_from_stream(self, svg_stream_data):
+        stream_data, expected_width, expected_height = svg_stream_data
+        stream = io.BytesIO(stream_data)
+        width, height = Svg._dimensions_from_stream(stream)
+        assert width == expected_width
+        assert height == expected_height
 
-def test_dimensions_from_stream(svg_stream_data):
-    stream_data, expected_width, expected_height = svg_stream_data
-    stream = io.BytesIO(stream_data)
-    width, height = Svg._dimensions_from_stream(stream)
-    assert width == expected_width
-    assert height == expected_height
-
-
-def test_calculate_scaled_dimensions(viewbox_data):
-    viewbox, expected_width, expected_height, base_px = viewbox_data
-    width, height = Svg._calculate_scaled_dimensions(viewbox, base_px)
-    assert width == expected_width
-    assert height == expected_height
+    def it_calculates_scaled_dimensions(self, viewbox_data):
+        viewbox, expected_width, expected_height, base_px = viewbox_data
+        width, height = Svg._calculate_scaled_dimensions(viewbox, base_px)
+        assert width == expected_width
+        assert height == expected_height
 

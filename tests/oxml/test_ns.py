@@ -1,17 +1,11 @@
-# encoding: utf-8
-
-"""
-Test suite for docx.oxml.ns
-"""
-
-from __future__ import absolute_import, print_function, unicode_literals
+"""Test suite for docx.oxml.ns."""
 
 import pytest
 
 from docx.oxml.ns import NamespacePrefixedTag
 
 
-class DescribeNamespacePrefixedTag(object):
+class DescribeNamespacePrefixedTag:
     def it_behaves_like_a_string_when_you_want_it_to(self, nsptag):
         s = "- %s -" % nsptag
         assert s == "- a:foobar -"

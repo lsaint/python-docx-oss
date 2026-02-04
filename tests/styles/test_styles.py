@@ -1,8 +1,4 @@
-# encoding: utf-8
-
-"""Unit test suite for the docx.styles.styles module"""
-
-from __future__ import absolute_import, division, print_function, unicode_literals
+"""Unit test suite for the docx.styles.styles module."""
 
 import pytest
 
@@ -16,7 +12,7 @@ from ..unitutil.cxml import element
 from ..unitutil.mock import call, class_mock, function_mock, instance_mock, method_mock
 
 
-class DescribeStyles(object):
+class DescribeStyles:
     def it_supports_the_in_operator_on_style_name(self, in_fixture):
         styles, name, expected_value = in_fixture
         assert (name in styles) is expected_value
@@ -56,15 +52,13 @@ class DescribeStyles(object):
 
         style = styles.add_style(name, style_type, builtin)
 
-        styles._element.add_style_of_type.assert_called_once_with(
-            name_, style_type, builtin
-        )
+        styles._element.add_style_of_type.assert_called_once_with(name_, style_type, builtin)
         StyleFactory_.assert_called_once_with(style_elm_)
         assert style is style_
 
     def it_raises_when_style_name_already_used(self, add_raises_fixture):
         styles, name = add_raises_fixture
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="document already contains style 'Hea"):
             styles.add_style(name, None)
 
     def it_can_get_the_default_style_for_a_type(self, default_fixture):
@@ -114,9 +108,7 @@ class DescribeStyles(object):
 
         style_id = styles.get_style_id("Style Name", style_type)
 
-        _get_style_id_from_name_.assert_called_once_with(
-            styles, "Style Name", style_type
-        )
+        _get_style_id_from_name_.assert_called_once_with(styles, "Style Name", style_type)
         assert style_id == "StyleId"
 
     def but_it_returns_None_for_a_style_or_name_of_None(self):
@@ -136,9 +128,7 @@ class DescribeStyles(object):
         assert StyleFactory_.call_args_list == StyleFactory_calls
         assert style is style_
 
-    def it_gets_a_style_id_from_a_name_to_help(
-        self, _getitem_, _get_style_id_from_style_, style_
-    ):
+    def it_gets_a_style_id_from_a_name_to_help(self, _getitem_, _get_style_id_from_style_, style_):
         style_name, style_type, style_id_ = "Foo Bar", 1, "FooBar"
         _getitem_.return_value = style_
         _get_style_id_from_style_.return_value = style_id_
@@ -160,7 +150,7 @@ class DescribeStyles(object):
 
     def it_raises_on_style_type_mismatch(self, id_style_raises_fixture):
         styles, style_, style_type = id_style_raises_fixture
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="assigned style is type 1, need type 2"):
             styles._get_style_id_from_style(style_, style_type)
 
     def it_provides_access_to_the_latent_styles(self, latent_styles_fixture):
@@ -177,9 +167,7 @@ class DescribeStyles(object):
             ("Heading 1", "heading 1", WD_STYLE_TYPE.PARAGRAPH, True),
         ]
     )
-    def add_fixture(
-        self, request, styles_elm_, _getitem_, style_elm_, StyleFactory_, style_
-    ):
+    def add_fixture(self, request, styles_elm_, _getitem_, style_elm_, StyleFactory_, style_):
         name, name_, style_type, builtin = request.param
         styles = Styles(styles_elm_)
         _getitem_.return_value = None
@@ -211,8 +199,7 @@ class DescribeStyles(object):
                 WD_STYLE_TYPE.PARAGRAPH,
             ),
             (
-                "w:styles/(w:style{w:type=table,w:default=1},w:style{w:type=table,w"
-                ":default=1})",
+                "w:styles/(w:style{w:type=table,w:default=1},w:style{w:type=table,w:default=1})",
                 True,
                 WD_STYLE_TYPE.TABLE,
             ),
@@ -391,9 +378,7 @@ class DescribeStyles(object):
 
     @pytest.fixture
     def LatentStyles_(self, request, latent_styles_):
-        return class_mock(
-            request, "docx.styles.styles.LatentStyles", return_value=latent_styles_
-        )
+        return class_mock(request, "docx.styles.styles.LatentStyles", return_value=latent_styles_)
 
     @pytest.fixture
     def latent_styles_(self, request):

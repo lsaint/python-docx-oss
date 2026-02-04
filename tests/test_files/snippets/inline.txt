@@ -1,4 +1,4 @@
-<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main">
+<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <wp:extent cx="444" cy="888"/>
   <wp:docPr id="24" name="Picture 24"/>
   <wp:cNvGraphicFramePr>
@@ -6,7 +6,7 @@
   </wp:cNvGraphicFramePr>
   <a:graphic>
     <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
-      <pic:pic>
+      <pic:pic xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main">
         <pic:nvPicPr>
           <pic:cNvPr id="0" name="bar.png"/>
           <pic:cNvPicPr/>

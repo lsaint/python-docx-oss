@@ -1,12 +1,9 @@
-# encoding: utf-8
-
 """Unit test suite for docx.image package"""
 
-from __future__ import absolute_import, print_function, unicode_literals
+import io
 
 import pytest
 
-from docx.compat import BytesIO
 from docx.image.bmp import Bmp
 from docx.image.exceptions import UnrecognizedImageError
 from docx.image.gif import Gif
@@ -17,7 +14,7 @@ from docx.image.tiff import Tiff
 from docx.opc.constants import CONTENT_TYPE as CT
 from docx.shared import Emu, Length
 
-from ..unitutil.file import testfile
+from ..unitutil.file import test_file
 from ..unitutil.mock import (
     ANY,
     class_mock,
@@ -29,10 +26,8 @@ from ..unitutil.mock import (
 )
 
 
-class DescribeImage(object):
-    def it_can_construct_from_an_image_blob(
-        self, blob_, BytesIO_, _from_stream_, stream_, image_
-    ):
+class DescribeImage:
+    def it_can_construct_from_an_image_blob(self, blob_, BytesIO_, _from_stream_, stream_, image_):
         image = Image.from_blob(blob_)
 
         BytesIO_.assert_called_once_with(blob_)
@@ -116,7 +111,7 @@ class DescribeImage(object):
     def it_correctly_characterizes_known_images(self, known_image_fixture):
         image_path, characteristics = known_image_fixture
         ext, content_type, px_width, px_height, horz_dpi, vert_dpi = characteristics
-        with open(testfile(image_path), "rb") as stream:
+        with open(test_file(image_path), "rb") as stream:
             image = Image.from_file(stream)
             assert image.content_type == content_type
             assert image.ext == ext
@@ -149,16 +144,16 @@ class DescribeImage(object):
 
     @pytest.fixture
     def from_filelike_fixture(self, _from_stream_, image_):
-        image_path = testfile("python-icon.png")
+        image_path = test_file("python-icon.png")
         with open(image_path, "rb") as f:
             blob = f.read()
-        image_stream = BytesIO(blob)
+        image_stream = io.BytesIO(blob)
         return image_stream, _from_stream_, blob, image_
 
     @pytest.fixture
     def from_path_fixture(self, _from_stream_, BytesIO_, stream_, image_):
         filename = "python-icon.png"
-        image_path = testfile(filename)
+        image_path = test_file(filename)
         with open(image_path, "rb") as f:
             blob = f.read()
         return image_path, _from_stream_, stream_, blob, filename, image_
@@ -226,7 +221,7 @@ class DescribeImage(object):
 
     @pytest.fixture
     def BytesIO_(self, request, stream_):
-        return class_mock(request, "docx.image.image.BytesIO", return_value=stream_)
+        return class_mock(request, "docx.image.image.io.BytesIO", return_value=stream_)
 
     @pytest.fixture
     def filename_(self, request):
@@ -234,9 +229,7 @@ class DescribeImage(object):
 
     @pytest.fixture
     def _from_stream_(self, request, image_):
-        return method_mock(
-            request, Image, "_from_stream", autospec=False, return_value=image_
-        )
+        return method_mock(request, Image, "_from_stream", autospec=False, return_value=image_)
 
     @pytest.fixture
     def height_prop_(self, request):
@@ -262,21 +255,21 @@ class DescribeImage(object):
 
     @pytest.fixture
     def stream_(self, request):
-        return instance_mock(request, BytesIO)
+        return instance_mock(request, io.BytesIO)
 
     @pytest.fixture
     def width_prop_(self, request):
         return property_mock(request, Image, "width")
 
 
-class Describe_ImageHeaderFactory(object):
+class Describe_ImageHeaderFactory:
     def it_constructs_the_right_class_for_a_given_image_stream(self, call_fixture):
         stream, expected_class = call_fixture
         image_header = _ImageHeaderFactory(stream)
         assert isinstance(image_header, expected_class)
 
     def it_raises_on_unrecognized_image_stream(self):
-        stream = BytesIO(b"foobar 666 not an image stream")
+        stream = io.BytesIO(b"foobar 666 not an image stream")
         with pytest.raises(UnrecognizedImageError):
             _ImageHeaderFactory(stream)
 
@@ -295,15 +288,15 @@ class Describe_ImageHeaderFactory(object):
     )
     def call_fixture(self, request):
         image_filename, expected_class = request.param
-        image_path = testfile(image_filename)
+        image_path = test_file(image_filename)
         with open(image_path, "rb") as f:
             blob = f.read()
-        image_stream = BytesIO(blob)
+        image_stream = io.BytesIO(blob)
         image_stream.seek(666)
         return image_stream, expected_class
 
 
-class DescribeBaseImageHeader(object):
+class DescribeBaseImageHeader:
     def it_defines_content_type_as_an_abstract_property(self):
         base_image_header = BaseImageHeader(None, None, None, None)
         with pytest.raises(NotImplementedError):
