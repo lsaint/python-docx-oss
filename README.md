@@ -4,7 +4,7 @@
 
 _As a Brazilian jiu-jitsu player, OSS means anything and everything. It's a term used in BJJ that is a way of greeting and demonstrating respect to others._
 
-**_python-docx-oss_** is a Python library for CRUD Microsoft Word (.docx) files. It fork from [python-docx](https://github.com/python-openxml/python-docx).
+[python-docx-oss](https://github.com/lsaint/python-docx-oss) is a Python library for CRUD Microsoft Word (.docx) files. It fork from [python-docx](https://github.com/python-openxml/python-docx).
 
 <p>
     <a href="https://pypi.org/project/python-docx-oss/"><img alt="PyPI" src="https://img.shields.io/pypi/v/python-docx-oss"></a>
