@@ -1,0 +1,90 @@
+"""Round-trip tests for packages containing multiple Custom XML parts."""
+
+from __future__ import annotations
+
+import io
+from pathlib import Path
+from typing import Protocol, cast
+from zipfile import ZipFile
+
+import pytest
+
+from docx import Document
+from docx.document import Document as DocumentType
+from docx.parts.customxml import CustomXmlPart
+
+FIXTURE = (
+    Path(__file__).parent.parent.parent
+    / "fixtures"
+    / "customxml"
+    / "multiple-custom-xml-parts.docx"
+)
+CUSTOMERS_NS = "urn:python-docx-oss:customers"
+INVENTORY_NS = "urn:python-docx-oss:inventory"
+AUDIT_NS = "urn:python-docx-oss:audit"
+
+
+class _CustomXmlPartProtocol(Protocol):
+    def add_item(self, tag: str, text: str = "", **attrib: str) -> None: ...
+
+
+def _parts_by_name(document: DocumentType) -> dict[str, CustomXmlPart]:
+    return {str(part.partname): part for part in document.part.custom_xml_parts}
+
+
+class DescribeMultipleCustomXmlParts:
+    def it_loads_multiple_namespaced_parts_with_non_contiguous_names(self):
+        document = Document(io.BytesIO(FIXTURE.read_bytes()))
+        parts = _parts_by_name(document)
+
+        assert set(parts) == {"/customXml/item1.xml", "/customXml/item3.xml"}
+        assert parts["/customXml/item1.xml"].tag == f"{{{CUSTOMERS_NS}}}customers"
+        assert parts["/customXml/item3.xml"].tag == f"{{{INVENTORY_NS}}}inventory"
+        assert len(parts["/customXml/item1.xml"].items) == 2
+        assert len(parts["/customXml/item3.xml"].items) == 2
+
+    def it_round_trips_create_update_and_delete_operations_in_memory(self):
+        document = Document(io.BytesIO(FIXTURE.read_bytes()))
+        parts = _parts_by_name(document)
+        customers = parts["/customXml/item1.xml"]
+        inventory = parts["/customXml/item3.xml"]
+
+        cast(_CustomXmlPartProtocol, customers).add_item(
+            f"{{{CUSTOMERS_NS}}}status",
+            "active",
+            source="round-trip",
+        )
+        inventory.delete_item(inventory.items[0])
+        document.part.add_custom_xml_part(
+            f'<audit xmlns="{AUDIT_NS}" revision="1"><event>created</event></audit>',
+        )
+
+        output = io.BytesIO()
+        document.save(output)
+        reopened = Document(io.BytesIO(output.getvalue()))
+        reopened_parts = _parts_by_name(reopened)
+
+        assert set(reopened_parts) == {
+            "/customXml/item1.xml",
+            "/customXml/item2.xml",
+            "/customXml/item3.xml",
+        }
+        status = reopened_parts["/customXml/item1.xml"].items[-1]
+        assert status.tag == f"{{{CUSTOMERS_NS}}}status"
+        assert status.text == "active"
+        assert status.attrib["source"] == "round-trip"
+        assert len(reopened_parts["/customXml/item3.xml"].items) == 1
+        assert reopened_parts["/customXml/item2.xml"].tag == f"{{{AUDIT_NS}}}audit"
+
+        with ZipFile(io.BytesIO(output.getvalue())) as package:
+            names = set(package.namelist())
+        assert "customXml/itemProps1.xml" in names
+        assert "customXml/itemProps3.xml" in names
+        assert "customXml/_rels/item1.xml.rels" in names
+        assert "customXml/_rels/item3.xml.rels" in names
+
+    def it_rejects_an_explicit_partname_collision(self):
+        document = Document(io.BytesIO(FIXTURE.read_bytes()))
+
+        with pytest.raises(ValueError, match="part already exists at '/customXml/item1.xml'"):
+            document.part.add_custom_xml_part("<duplicate/>", file_name="item1")

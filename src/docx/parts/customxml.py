@@ -1,6 +1,7 @@
 """
 |CustomXmlPart| and closely related objects
 """
+
 from lxml import etree
 from lxml.etree import fromstring
 
@@ -17,17 +18,21 @@ class CustomXmlPart(XmlPart):
     @classmethod
     def default(
         cls,
-        file_name: str,
+        file_name: str | None,
         content_type: str,
         xml: str,
         package: OpcPackage,
     ) -> "CustomXmlPart":
-        """
-        Create a default xml file in /customXml/*file_name*.xml
-        with default content *xml* and type *content_type*
-        """
+        """Create a Custom XML part with a unique package partname."""
+        if file_name is None:
+            partname = package.next_partname("/customXml/item%d.xml")
+        else:
+            partname = PackURI(f"/customXml/{file_name}.xml")
+            if any(part.partname == partname for part in package.iter_parts()):
+                raise ValueError(f"part already exists at '{partname}'")
+
         return cls(
-            PackURI(f"/customXml/{file_name}.xml"),
+            partname,
             content_type,
             fromstring(xml),
             package,

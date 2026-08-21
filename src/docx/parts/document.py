@@ -36,9 +36,9 @@ class DocumentPart(StoryPart):
     """
 
     def add_custom_xml_part(
-        self, xml: str, file_name: str = "item1", content_type: str = CT.XML
+        self, xml: str, file_name: str | None = None, content_type: str = CT.XML
     ) -> CustomXmlPart:
-        """Add a file in /customXml/*file_name*.xml with default content *xml*."""
+        """Add a Custom XML part, using the next available `itemN.xml` by default."""
         part = CustomXmlPart.default(file_name, content_type, xml, self.package)
         return self.rels.get_or_add(RT.CUSTOM_XML, part).target_part
 

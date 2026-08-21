@@ -1,6 +1,7 @@
 import pytest
 
 from docx.opc.constants import CONTENT_TYPE as CT
+from docx.opc.packuri import PackURI
 from docx.parts.customxml import CustomXmlPart
 
 
@@ -22,6 +23,24 @@ class TestCustomXml:
         custom_xml_part.delete_item(custom_xml_part.items[0])
         assert custom_xml_part.items[0].tag == "bar"
         assert len(custom_xml_part.items) == 1
+
+    def test_uses_next_available_partname_by_default(self, mocker, default_xml):
+        package = mocker.MagicMock()
+        package.next_partname.return_value = PackURI("/customXml/item2.xml")
+
+        part = CustomXmlPart.default(None, CT.XML, default_xml, package)
+
+        package.next_partname.assert_called_once_with("/customXml/item%d.xml")
+        assert part.partname == "/customXml/item2.xml"
+
+    def test_rejects_an_explicit_partname_collision(self, mocker, default_xml):
+        package = mocker.MagicMock()
+        existing_part = mocker.MagicMock()
+        existing_part.partname = PackURI("/customXml/item1.xml")
+        package.iter_parts.return_value = iter([existing_part])
+
+        with pytest.raises(ValueError, match="part already exists at '/customXml/item1.xml'"):
+            CustomXmlPart.default("item1", CT.XML, default_xml, package)
 
     @pytest.fixture
     def custom_xml_part(self, mocker, default_xml):
