@@ -4,12 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-docx-oss"
-authors = [{ name = "Ethan St. Lee" }]
+authors = [{ name = "Ethan St Lee" }]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
@@ -23,9 +22,15 @@ dependencies = ["lxml>=3.1.0", "typing_extensions>=4.9.0"]
 description = "Create, read, and update Microsoft Word .docx files."
 dynamic = ["version"]
 keywords = ["docx", "office", "openxml", "word"]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.12"
+
+[project.urls]
+Changelog = "https://github.com/lsaint/python-docx-oss/blob/master/HISTORY.md"
+Documentation = "https://python-docx-oss.readthedocs.io/en/latest/"
+Issues = "https://github.com/lsaint/python-docx-oss/issues"
+Repository = "https://github.com/lsaint/python-docx-oss"
 
 [dependency-groups]
 dev = [
@@ -38,6 +43,7 @@ dev = [
   "pyright>=1.1.401",
   "pytest>=8.4.0",
   "ruff>=0.11.13",
+  "sphinx-book-theme",
   "tox>=4.26.0",
   "twine>=6.1.0",
   "types-lxml-multi-subclass>=2025.3.30",

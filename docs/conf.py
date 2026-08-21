@@ -20,8 +20,8 @@ from docx import __version__  # noqa
 # -- Project information -----------------------------------------------------
 
 project = "python-docx-oss"
-copyright = "2022, Ethan St. Lee"
-author = "Ethan St. Lee"
+copyright = "2022-2026, Ethan St Lee"
+author = "Ethan St Lee"
 
 # The full version, including alpha/beta/rc tags
 release = __version__

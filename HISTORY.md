@@ -1,5 +1,15 @@
 ## Release History
 
+**0.1.1 (2026-08-21)**
+
+- Added Python 3.14 support and CI coverage for Python 3.12 through 3.14.
+- Added real Microsoft Word document round-trip coverage for floating pictures,
+  SVG images, East Asian fonts, and multiple Custom XML parts.
+- Fixed automatic Custom XML part naming to select an available `itemN.xml`
+  name and reject explicit name collisions.
+- Expanded the project overview, installation guide, in-memory document examples,
+  and Custom XML lifecycle documentation.
+
 **0.1.0 (2026-02-02)**
 
 - **UPSTREAM MERGE** with python-docx 1.2.0.
