@@ -65,6 +65,7 @@ jobs:
             --requirement requirements-test.txt \
             --requirement requirements-docs.txt \
             pyright \
+            types-lxml-multi-subclass \
             build
 
       - name: Check formatting
