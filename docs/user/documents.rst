@@ -61,34 +61,36 @@ Things to note:
   what you intend.
 
 
-Opening a 'file-like' document
-------------------------------
+Opening a file-like document
+----------------------------
 
 |docx| can open a document from a so-called *file-like* object. It can also
 save to a file-like object. This can be handy when you want to get the source
 or target document over a network connection or from a database and don't want
-to (or aren't allowed to) interact with the file system. In practice this means
-you can pass an open file or StringIO/BytesIO stream object to open or save
-a document like so::
+to (or aren't allowed to) interact with the file system. A ``.docx`` package is
+binary, so an in-memory stream must be an :class:`io.BytesIO` object::
 
-    f = open('foobar.docx', 'rb')
-    document = Document(f)
-    f.close()
+    from io import BytesIO
 
-    # or
+    from docx import Document
 
-    with open('foobar.docx', 'rb') as f:
-        source_stream = StringIO(f.read())
+    with open("foobar.docx", "rb") as file:
+        source_stream = BytesIO(file.read())
     document = Document(source_stream)
-    source_stream.close()
-    ...
-    target_stream = StringIO()
+
+    document.add_paragraph("Added in memory")
+
+    target_stream = BytesIO()
     document.save(target_stream)
 
-The ``'rb'`` file open mode parameter isn't required on all operating
-systems. It defaults to ``'r'`` which is enough sometimes, but the 'b'
-(selecting binary mode) is required on Windows and at least some versions of
-Linux to allow Zipfile to open the file.
+The caller owns streams passed to |docx| and is responsible for closing them.
+After saving, rewind the output stream before reading it or opening it again::
+
+    target_stream.seek(0)
+    reopened = Document(target_stream)
+
+Always open ``.docx`` files in binary mode (``"rb"`` for reading and ``"wb"``
+for writing).
 
 Okay, so you've got a document open and are pretty sure you can save it
 somewhere later. Next step is to get some content in there ...

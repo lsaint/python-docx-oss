@@ -3,28 +3,29 @@
 Installing
 ==========
 
-|docx| is hosted on `PyPI <https://pypi.org/project/python-docx-oss/>`_,
-so installation is relatively simple, and just
-depends on what installation utilities you have installed.
+|docx| is hosted on `PyPI <https://pypi.org/project/python-docx-oss/>`_.
 
-|docx| may be installed with ``pip`` if you have it available::
+Install it with ``pip``::
 
-    pip install python-docx-oss
+    python -m pip install python-docx-oss
 
-It can be installed manually by downloading the distribution from PyPI, unpacking the tarball,
-and running ``setup.py``::
+To work from a source checkout, install it in editable mode from the repository
+root::
 
-    tar xvzf python-docx-{version}.tar.gz
-    cd python-docx-oss-{version}
-    python setup.py install
+    python -m pip install -e .
 
-|docx| depends on the ``lxml`` package. 
-``pip`` will take care of satisfying those dependencies for you, 
-but if you use this last method you will need to install those yourself.
+.. warning::
+
+   ``python-docx-oss`` and ``python-docx`` both provide the top-level ``docx``
+   import package. Do not install them in the same Python environment. Remove
+   the other distribution before switching between the two projects.
 
 
 Dependencies
 ------------
 
-* Python >= 3.12
-* lxml >= 4.6.5
+* Python 3.12, 3.13, or 3.14
+* lxml >= 3.1.0
+* typing_extensions >= 4.9.0
+
+``pip`` installs the required dependencies automatically.

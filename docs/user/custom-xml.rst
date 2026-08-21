@@ -1,66 +1,95 @@
 .. _custom_xml:
 
-Working with customXml
+Working with Custom XML
 =======================
 
-As we know, Word documents are .zip files under the hook. 
-Can we add any file in a docx file? Literally yes. 
-After we unzip a docx file, We can add a ``customXml`` folder at the root of it, 
-which contains any .xml files. 
-Files with other extension and paths are invalid. 
-But it's enough for us to store custom data. 
-It can not be seen or modified in Word like :ref:`CustomProperties<custom_properties>`. 
+A ``.docx`` file is an Open Packaging Conventions package. Custom XML parts
+store application-specific XML inside its ``customXml`` directory without
+placing that data in the visible document body.
 
-python-docx-oss will create a default XML file in the folder if there are not.
-Then developer can add/delete/modify items in it.
+.. warning::
 
-WARNING:
-This feature may only work for Microsoft Office Word,
-Some other docx file clients may delete the customXml folder after editing.
-Please use :ref:`CustomProperties<custom_properties>` in this circumstance.
+   Some applications that edit ``.docx`` files may remove Custom XML parts.
+   Test the complete editing workflow used by your application. For simple
+   scalar metadata, :ref:`Custom Properties <custom_properties>` may be a more
+   interoperable choice.
 
-eg::
+
+Creating a part
+---------------
+
+Create a Custom XML part from a well-formed XML string::
 
     from docx import Document
 
     document = Document()
-    cx = document.part.custom_xml_parts[0]
+    customers = document.part.add_custom_xml_part(
+        '<customers xmlns="urn:example:customers"><customer id="1">Ada</customer></customers>'
+    )
+    document.save("customers.docx")
 
-    cx.add_item("my_tag", "some_texts", foo="foo_attrib_value")
-    cx.add_item("your_tag", "a_word", bar="bar_attrib_value")
+When no ``file_name`` is supplied, |docx| selects the next available package
+name matching ``/customXml/itemN.xml``. For example, if ``item1.xml`` and
+``item3.xml`` already exist, the new part is named ``item2.xml``.
 
-2 new xml elements::
+An explicit name can be supplied without the ``.xml`` suffix::
 
-    <my_tag foo="foo_attrib_value">some_texts</my_tag>
-    <your_tag bar1="value1" bar2="value2">a_word</your_tag>
+    audit = document.part.add_custom_xml_part(
+        "<audit><event>created</event></audit>",
+        file_name="audit",
+    )
 
-will be add to ``customXml/item1.xml``
+The resulting part name is ``/customXml/audit.xml``. A ``ValueError`` is raised
+if that part name already exists.
 
-you can retrieve it::
 
-    >>> cx.items[0].tag
-    my_tag
+Finding parts
+-------------
 
-    >>> cx.items[0].text)
-    some_texts
+``document.part.custom_xml_parts`` returns all Custom XML parts related to the
+main document. Select a part by its package name or root element rather than by
+list position::
 
-    >>> cx.items[0].attrib["foo"]
-    foo_attrib_value
+    parts_by_name = {
+        str(part.partname): part
+        for part in document.part.custom_xml_parts
+    }
+    customers = parts_by_name["/customXml/item1.xml"]
 
-    >>> cx.items[1].tag
-    your_tag
+    print(customers.tag)
+    print(customers.attrib)
+    print(customers.items)
 
-    >>> cx.items[1].text)
-    a_word
 
-    >>> cx.items[1].attrib["bar2"]
-    value2
+Updating child elements
+-----------------------
 
-or delete it::
+``items`` contains the child elements of the part's root element. These are
+``lxml`` elements, so their text and attributes can be updated directly::
 
-    >>> cx.delete_item(cx.items[0])
+    customer = customers.items[0]
+    customer.text = "Grace"
+    customer.attrib["status"] = "active"
 
-Be careful. Items are stored as a list, the index may change after deletion::
+Use Clark notation when adding an element in a namespace::
 
-    >>> cx.items[0].tag
-    your_tag
+    customers.add_item(
+        "{urn:example:customers}customer",
+        "Linus",
+        id="2",
+    )
+
+
+Deleting child elements
+-----------------------
+
+Delete a child by passing the element itself::
+
+    customer = customers.items[0]
+    customers.delete_item(customer)
+
+The indexes in ``items`` can change after deletion. Removing an entire Custom
+XML part is not currently provided by this API.
+
+Existing relationships to Custom XML property parts, such as
+``itemPropsN.xml``, are preserved during load/save round trips.

@@ -1,14 +1,12 @@
-.. python-docx-oss documentation master file, created by
-   sphinx-quickstart on Wed Jul  6 15:38:29 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to python-docx-oss's documentation!
-===========================================
+python-docx-oss documentation
+=============================
 
 Release v\ |release| (:ref:`Installation <install>`)
 
-*python-docx-oss* is a Python library for CRUD Microsoft Word (.docx) files.
+*python-docx-oss* is an independently developed Python SDK for creating,
+reading, and updating Microsoft Word (``.docx``) files. It combines familiar
+document APIs with advanced WordprocessingML capabilities such as floating and
+vector images, East Asian font control, custom properties, and Custom XML.
 
 
 What it can do
@@ -16,7 +14,17 @@ What it can do
 
 .. |img| image:: /_static/img/example-docx-01.png 
 
-Here's an example of what |docx| can do:
+The library supports common document operations, including paragraphs, text
+formatting, tables, sections, headers, footers, comments, and images. It also
+supports capabilities needed by more demanding document workflows:
+
+* floating images with position and text wrapping;
+* SVG and EMF vector images;
+* separate Latin and East Asian font settings;
+* document custom properties; and
+* multiple Custom XML parts that survive a load/save round trip.
+
+Here is a small example:
 
 ::
 
