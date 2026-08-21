@@ -60,7 +60,12 @@ jobs:
       - name: Install development tools
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --editable . --requirement requirements-test.txt pyright build
+          python -m pip install \
+            --editable . \
+            --requirement requirements-test.txt \
+            --requirement requirements-docs.txt \
+            pyright \
+            build
 
       - name: Check formatting
         run: |
@@ -79,6 +84,9 @@ jobs:
           python -m pyright \
             tests/integration \
             tests/fixtures/customxml/generate_fixture.py
+
+      - name: Build documentation
+        run: python -m sphinx -W --keep-going -b html docs docs/.build/html
 
       - name: Build distributions
         run: python -m build
