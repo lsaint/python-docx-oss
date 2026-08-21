@@ -6,8 +6,6 @@ Unit test suite for the docx.opc.parts.customprops module
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from datetime import datetime, timedelta
-
 import pytest
 
 from docx.opc.customprops import CustomProperties

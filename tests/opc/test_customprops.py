@@ -1,6 +1,7 @@
 """
 Unit test suite for the docx.opc.customprops module
 """
+
 import pytest
 from lxml import etree
 
@@ -20,7 +21,9 @@ class DescribeCustomProperties(object):
     def it_can_set_new_prop_values(self, prop_set_fixture):
         custom_properties, prop_name, value, expected_xml = prop_set_fixture
         custom_properties[prop_name] = value
-        assert etree.tostring(custom_properties._element, pretty_print=True).decode() == expected_xml
+        assert (
+            etree.tostring(custom_properties._element, pretty_print=True).decode() == expected_xml
+        )
 
     # fixtures -------------------------------------------------------
 
@@ -63,17 +66,17 @@ class DescribeCustomProperties(object):
 
     @pytest.fixture
     def custom_properties_blank(self):
-        xml = '''<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"></Properties>'''
+        xml = """<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"></Properties>"""
         element = parse_xml(xml)
         return CustomProperties(element)
 
     @pytest.fixture
     def custom_properties_default(self):
-        xml = b'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        xml = b"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
   <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2" name="CustomPropBool"><vt:bool>1</vt:bool></property>
   <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="3" name="CustomPropInt"><vt:i4>13</vt:i4></property>
   <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="4" name="CustomPropString"><vt:lpwstr>Test String</vt:lpwstr></property>
-</Properties>'''
+</Properties>"""
         element = parse_xml(xml)
         return CustomProperties(element)

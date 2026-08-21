@@ -28,7 +28,10 @@ class DescribeBaseOxmlElement:
     def it_can_call_xpath_with_custom_namespaces(self):
         element = CT_ParentBuilder().with_nsdecls().element
         # -- this should not raise TypeError --
-        results = element.xpath(".//w:zooChild", namespaces={"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"})
+        results = element.xpath(
+            ".//w:zooChild",
+            namespaces={"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"},
+        )
         assert results == []
 
     def it_can_find_the_first_of_its_children_named_in_a_sequence(self, first_fixture):

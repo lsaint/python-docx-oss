@@ -17,7 +17,7 @@ from pyparsing import (
     alphas,
     dblQuotedString,
     quotedString,
-    removeQuotes,
+    remove_quotes,
     stringEnd,
 )
 
@@ -242,11 +242,11 @@ def grammar():
 
     # np:attr_name=attr_val ----------------------
     attr_name = Word(alphas + ":")
-    attr_val = Word(alphanums + " %-./:_") | quotedString.set_parse_action(removeQuotes)
+    attr_val = Word(alphanums + " %-./:_") | quotedString.set_parse_action(remove_quotes)
     attr_def = Group(attr_name + equal + attr_val)
     attr_list = open_brace + DelimitedList(attr_def) + close_brace
 
-    text = dblQuotedString.set_parse_action(removeQuotes)
+    text = dblQuotedString.set_parse_action(remove_quotes)
 
     # w:jc{val=right} ----------------------------
     element = (

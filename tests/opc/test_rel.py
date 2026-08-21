@@ -260,7 +260,9 @@ class DescribeRelationships:
         return rels, reltype, target_part
 
     @pytest.fixture
-    def rels_with_targets_known_by_reltype(self, rels, _rel_with_target_known_by_reltype, _target_part):
+    def rels_with_targets_known_by_reltype(
+        self, rels, _rel_with_target_known_by_reltype, _target_part
+    ):
         rel, reltype, _ = _rel_with_target_known_by_reltype
         rels[1] = rel
         rels[2] = _Relationship("rId7", reltype, _target_part, "baseURI")

@@ -43,7 +43,11 @@ class DescribeFont:
         ],
     )
     def it_knows_its_typeface_name(
-        self, r_cxml: str, expected_ascii: str | None, expected_hAnsi: str | None, expected_eastAsia: str | None
+        self,
+        r_cxml: str,
+        expected_ascii: str | None,
+        expected_hAnsi: str | None,
+        expected_eastAsia: str | None,
     ):
         r = cast(CT_R, element(r_cxml))
         font = Font(r)
@@ -89,7 +93,9 @@ class DescribeFont:
             ),
         ],
     )
-    def it_can_change_its_typeface_name(self, r_cxml: str, value: str | dict[str, str | None], expected_r_cxml: str):
+    def it_can_change_its_typeface_name(
+        self, r_cxml: str, value: str | dict[str, str | None], expected_r_cxml: str
+    ):
         r = cast(CT_R, element(r_cxml))
         font = Font(r)
         expected_xml = xml(expected_r_cxml)

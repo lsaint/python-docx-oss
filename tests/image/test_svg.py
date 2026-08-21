@@ -91,4 +91,3 @@ class DescribeSvg:
         width, height = Svg._calculate_scaled_dimensions(viewbox, base_px)
         assert width == expected_width
         assert height == expected_height
-

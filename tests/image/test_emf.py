@@ -2,9 +2,10 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import io
+
 import pytest
 
-import io
 from docx.image.emf import Emf
 from docx.image.helpers import LITTLE_ENDIAN, StreamReader
 
