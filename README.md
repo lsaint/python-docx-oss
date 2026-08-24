@@ -142,6 +142,7 @@ available through `Document.add_float_picture()` and `Run.add_float_picture()`.
 - [API reference](docs/index.rst#api-documentation)
 - [Custom properties](docs/user/custom-properties.rst)
 - [Custom XML](docs/user/custom-xml.rst)
+- [python-docx compatibility](docs/user/compatibility.rst)
 - [Upstream maintenance](docs/dev/upstream-maintenance.rst)
 - [Release history](HISTORY.md)
 

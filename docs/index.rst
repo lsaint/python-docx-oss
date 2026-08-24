@@ -97,6 +97,7 @@ User Guide
    user/shapes
    user/custom-properties
    user/custom-xml
+   user/compatibility
 
 
 API Documentation
