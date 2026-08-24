@@ -2,9 +2,12 @@ BEHAVE = behave
 MAKE   = make
 PYTHON = python
 TWINE  = $(PYTHON) -m twine
+VERSION := $(shell sed -n 's/^__version__ = "\(.*\)"/\1/p' src/docx/__init__.py)
+SDIST  = dist/python_docx_oss-$(VERSION).tar.gz
+WHEEL  = dist/python_docx_oss-$(VERSION)-py3-none-any.whl
 
 .PHONY: accept build clean cleandocs coverage docs install opendocs sdist test
-.PHONY: test-upload wheel
+.PHONY: test-upload upload verify-release wheel
 
 help:
 	@echo "Please use \`make <target>' where <target> is one or more of"
@@ -54,11 +57,20 @@ sdist:
 test:
 	uv run pytest -x
 
-test-upload: sdist wheel
-	uv run $(TWINE) upload --repository testpypi dist/*
+test-upload: clean sdist wheel
+	uv run $(TWINE) check $(WHEEL) $(SDIST)
+	uv run $(TWINE) upload --repository testpypi $(WHEEL) $(SDIST)
 
-upload: clean sdist wheel
-	uv run $(TWINE) upload dist/*
+upload: verify-release
+	$(MAKE) clean
+	$(MAKE) sdist wheel
+	uv run $(TWINE) check $(WHEEL) $(SDIST)
+	uv run $(TWINE) upload $(WHEEL) $(SDIST)
+
+verify-release:
+	test -n "$(VERSION)"
+	test "$$(git rev-parse HEAD)" = "$$(git rev-parse v$(VERSION)^{})"
+	test -z "$$(git status --short)"
 
 wheel:
 	uv build --wheel

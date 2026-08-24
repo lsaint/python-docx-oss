@@ -43,16 +43,12 @@ jobs:
       - name: Run acceptance tests
         run: python -m behave --format progress --stop --tags=-wip
 
-  publish:
-    name: Publish to PyPI
+  package:
+    name: Verify release distributions
     needs: test
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/project/python-docx-oss/
     permissions:
       contents: read
-      id-token: write
 
     steps:
       - uses: actions/checkout@v5
@@ -66,14 +62,15 @@ jobs:
         run: |
           python -m pip install --upgrade build twine
           python -m build
-          python -m twine check dist/*
+          release_version="${GITHUB_REF_NAME#v}"
+          python -m twine check \
+            "dist/python_docx_oss-${release_version}-py3-none-any.whl" \
+            "dist/python_docx_oss-${release_version}.tar.gz"
 
       - name: Install and verify distribution
         run: |
-          python -m pip install --force-reinstall dist/*.whl
-          package_version="$(python -c 'import docx; print(docx.__version__)')"
           tag_version="${GITHUB_REF_NAME#v}"
+          python -m pip install --force-reinstall \
+            "dist/python_docx_oss-${tag_version}-py3-none-any.whl"
+          package_version="$(python -c 'import docx; print(docx.__version__)')"
           test "$package_version" = "$tag_version"
-
-      - name: Publish distributions
-        uses: pypa/gh-action-pypi-publish@release/v1
