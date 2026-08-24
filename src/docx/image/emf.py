@@ -13,7 +13,7 @@ class Emf(BaseImageHeader):
     @property
     def content_type(self):
         """
-        MIME content type for this image, unconditionally `image/emf` for
+        MIME content type for this image, unconditionally `image/x-emf` for
         EMF images.
         """
         return MIME_TYPE.EMF
@@ -38,7 +38,6 @@ class Emf(BaseImageHeader):
         y1 = stream_rdr.read_long(20)
 
         frame = tuple(map(stream_rdr.read_long, (24, 28, 32, 36)))
-        size = x1 - x0, y1 - y0
 
         xdpi = 2540.0 * (x1 - x0) / (frame[2] - frame[0])
         ydpi = 2540.0 * (y1 - y0) / (frame[3] - frame[1])

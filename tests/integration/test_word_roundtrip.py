@@ -12,6 +12,7 @@ from lxml import etree
 from docx import Document
 
 FIXTURE_DIR = Path(__file__).parent.parent / "fixtures"
+TEST_FILE_DIR = Path(__file__).parent.parent / "test_files"
 
 A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
 ASVG_NS = "http://schemas.microsoft.com/office/drawing/2016/SVG/main"
@@ -114,6 +115,31 @@ class DescribeWordDocumentRoundTrips:
         assert f"word/{png_target}" in package
         assert f"word/{svg_target}" in package
         assert _content_type(package, f"/word/{svg_target}") == "image/svg+xml"
+
+    def it_creates_and_round_trips_an_emf_image_in_memory(self):
+        emf_blob = (TEST_FILE_DIR / "sonic.emf").read_bytes()
+        document = Document(io.BytesIO(_fixture("documents", "word-blank.docx").read_bytes()))
+        document.add_picture(io.BytesIO(emf_blob))
+
+        output = io.BytesIO()
+        document.save(output)
+        reopened = Document(io.BytesIO(output.getvalue()))
+        assert len(reopened.inline_shapes) == 1
+
+        round_trip_output = io.BytesIO()
+        reopened.save(round_trip_output)
+        with ZipFile(io.BytesIO(round_trip_output.getvalue())) as docx_package:
+            package = {name: docx_package.read(name) for name in docx_package.namelist()}
+
+        document_xml = _xml(package, "word/document.xml")
+        blip = document_xml.find(f".//{{{A_NS}}}blip")
+        assert blip is not None
+        relationship_id = blip.get(f"{{{R_NS}}}embed")
+        assert relationship_id is not None
+        emf_target = _relationship_target(package, relationship_id)
+        assert emf_target.endswith(".emf")
+        assert package[f"word/{emf_target}"] == emf_blob
+        assert _content_type(package, f"/word/{emf_target}") == "image/x-emf"
 
     def it_preserves_distinct_latin_and_east_asian_fonts(self):
         package = _round_trip(_fixture("fonts", "word-east-asian-fonts.docx"))
