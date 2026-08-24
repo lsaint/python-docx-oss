@@ -117,11 +117,11 @@ API Documentation
    api/shared
    api/enum/index
 
-
 Contributor Guide
 -----------------
 
 .. toctree::
    :maxdepth: 1
 
+   dev/upstream-maintenance
    dev/analysis/index

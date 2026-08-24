@@ -67,12 +67,17 @@ Opening a file-like document
 |docx| can open a document from a so-called *file-like* object. It can also
 save to a file-like object. This can be handy when you want to get the source
 or target document over a network connection or from a database and don't want
-to (or aren't allowed to) interact with the file system. A ``.docx`` package is
-binary, so an in-memory stream must be an :class:`io.BytesIO` object::
-
-    from io import BytesIO
+to (or aren't allowed to) interact with the file system. Raw DOCX bytes can be
+opened directly::
 
     from docx import Document
+
+    with open("foobar.docx", "rb") as file:
+        document = Document(file.read())
+
+A binary file-like object such as :class:`io.BytesIO` is also supported::
+
+    from io import BytesIO
 
     with open("foobar.docx", "rb") as file:
         source_stream = BytesIO(file.read())

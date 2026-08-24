@@ -24,18 +24,19 @@ Use it when an application needs more than basic paragraphs and tables: custom d
 metadata, application-owned XML, vector images, floating pictures, East Asian fonts,
 or low-level package and relationship access.
 
-## Features
+## Capability Matrix
 
-| Capability | Support |
-| --- | --- |
-| Documents, paragraphs, runs, tables, styles, sections, headers, and footers | ✓ |
-| Custom document properties | ✓ |
-| Custom XML parts | ✓ |
-| SVG and EMF images | ✓ |
-| Inline and floating pictures | ✓ |
-| Independent ASCII, High ANSI, and East Asian font controls | ✓ |
-| Low-level OPC parts and relationships | ✓ |
-| File-path and in-memory stream processing | ✓ |
+| Capability | Status | Primary API |
+| --- | --- | --- |
+| Documents, paragraphs, tables, styles, sections, headers, and footers | Stable | `Document()` and document object APIs |
+| Custom document properties | Stable | `document.custom_properties` |
+| Custom XML lifecycle | Stable | `add_custom_xml_part()`, `delete_custom_xml_part()` |
+| SVG and EMF images | Stable | `add_picture()` |
+| Inline and floating pictures | Stable | `add_picture()`, `add_float_picture()` |
+| Latin and East Asian font controls | Stable | `run.font.name`, `run.font.hAnsi`, `run.font.eastAsia` |
+| Low-level OPC parts and relationships | Stable | `document.part.package`, `part.rels` |
+| In-memory read, export, and independent copies | Stable | `Document()`, `to_bytes()`, `copy()` |
+| Package inspection, diff, and sanitization | Planned | — |
 
 ## Installation
 
@@ -141,6 +142,7 @@ available through `Document.add_float_picture()` and `Run.add_float_picture()`.
 - [API reference](docs/index.rst#api-documentation)
 - [Custom properties](docs/user/custom-properties.rst)
 - [Custom XML](docs/user/custom-xml.rst)
+- [Upstream maintenance](docs/dev/upstream-maintenance.rst)
 - [Release history](HISTORY.md)
 
 ## Quality and Testing

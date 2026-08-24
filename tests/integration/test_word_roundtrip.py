@@ -74,9 +74,7 @@ class DescribeWordDocumentRoundTrips:
         assert not any(name.startswith("word/media/") for name in package)
 
     def it_creates_independent_document_copies_from_one_snapshot(self):
-        source = Document(
-            io.BytesIO(_fixture("customxml", "multiple-custom-xml-parts.docx").read_bytes())
-        )
+        source = Document(_fixture("customxml", "multiple-custom-xml-parts.docx").read_bytes())
         source.add_paragraph("Shared snapshot")
 
         document_b = source.copy()
@@ -96,7 +94,7 @@ class DescribeWordDocumentRoundTrips:
         assert len(source.part.custom_xml_parts[0].items) == 2
         assert len(document_d.part.custom_xml_parts[0].items) == 3
 
-        reopened = Document(io.BytesIO(document_d.to_bytes()))
+        reopened = Document(document_d.to_bytes())
         assert reopened.paragraphs[-1].text == "Shared snapshot"
         assert reopened.part.custom_xml_parts[0].items[-1].text == "D"
 
