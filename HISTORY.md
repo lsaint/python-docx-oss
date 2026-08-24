@@ -1,5 +1,16 @@
 ## Release History
 
+**0.2.0 (2026-08-24)**
+
+- Added direct loading from raw DOCX bytes with ``Document(bytes)``.
+- Added ``Document.to_bytes()`` for in-memory export and ``Document.copy()``
+  for independent document snapshots.
+- Added safe removal of Custom XML parts, including their document and property
+  relationships.
+- Added real-document EMF round-trip coverage and corrected the EMF MIME type.
+- Documented the capability matrix, upstream maintenance policy, and
+  compatibility boundary with official ``python-docx``.
+
 **0.1.1 (2026-08-21)**
 
 - Added Python 3.14 support and CI coverage for Python 3.12 through 3.14.

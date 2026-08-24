@@ -59,7 +59,7 @@ class CustomXmlPart(XmlPart):
         """
         return self.element.getchildren()
 
-    def add_item(self, tag: str, text: str = "", **attrib):
+    def add_item(self, tag: str, text: str = "", **attrib: str) -> None:
         """
         Add a child element to root.
         """
