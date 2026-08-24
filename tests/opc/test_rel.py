@@ -106,6 +106,15 @@ class DescribeRelationships:
         part = rels.related_parts[rId]
         assert part is known_target_part
 
+    def it_removes_the_cached_target_when_deleting_a_relationship(self):
+        rels = Relationships("/word")
+        target_part = Mock(name="target_part")
+        rels.add_relationship("reltype", target_part, "rId1")
+
+        del rels["rId1"]
+
+        assert "rId1" not in rels.related_parts
+
     def it_raises_on_related_part_not_found(self, rels):
         with pytest.raises(KeyError):
             rels.related_parts["rId666"]

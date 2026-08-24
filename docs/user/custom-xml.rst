@@ -89,7 +89,15 @@ Delete a child by passing the element itself::
     customers.delete_item(customer)
 
 The indexes in ``items`` can change after deletion. Removing an entire Custom
-XML part is not currently provided by this API.
+XML part uses the main document part::
+
+    document.part.delete_custom_xml_part(customers)
+
+The Custom XML part, its relationship from the main document, and any related
+``itemPropsN.xml`` property part are omitted the next time the document is
+saved. The deleted ``itemN.xml`` name becomes available for later additions.
+Attempting to delete a part that is not related to the document, including a
+part that has already been deleted, raises ``ValueError``.
 
 Existing relationships to Custom XML property parts, such as
 ``itemPropsN.xml``, are preserved during load/save round trips.

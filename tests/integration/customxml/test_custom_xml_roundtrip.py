@@ -88,3 +88,33 @@ class DescribeMultipleCustomXmlParts:
 
         with pytest.raises(ValueError, match="part already exists at '/customXml/item1.xml'"):
             document.part.add_custom_xml_part("<duplicate/>", file_name="item1")
+
+    def it_round_trips_deleting_a_part_and_reuses_its_partname(self):
+        document = Document(io.BytesIO(FIXTURE.read_bytes()))
+        customers = _parts_by_name(document)["/customXml/item1.xml"]
+
+        document.part.delete_custom_xml_part(customers)
+        replacement = document.part.add_custom_xml_part(f'<audit xmlns="{AUDIT_NS}"/>')
+        assert str(replacement.partname) == "/customXml/item1.xml"
+
+        output = io.BytesIO()
+        document.save(output)
+        reopened = Document(io.BytesIO(output.getvalue()))
+        reopened_parts = _parts_by_name(reopened)
+
+        assert set(reopened_parts) == {"/customXml/item1.xml", "/customXml/item3.xml"}
+        assert reopened_parts["/customXml/item1.xml"].tag == f"{{{AUDIT_NS}}}audit"
+        with ZipFile(io.BytesIO(output.getvalue())) as package:
+            names = set(package.namelist())
+        assert "customXml/itemProps1.xml" not in names
+        assert "customXml/_rels/item1.xml.rels" not in names
+        assert "customXml/itemProps3.xml" in names
+        assert "customXml/_rels/item3.xml.rels" in names
+
+    def it_rejects_deleting_a_part_twice(self):
+        document = Document(io.BytesIO(FIXTURE.read_bytes()))
+        customers = _parts_by_name(document)["/customXml/item1.xml"]
+        document.part.delete_custom_xml_part(customers)
+
+        with pytest.raises(ValueError, match="is not related to this document"):
+            document.part.delete_custom_xml_part(customers)

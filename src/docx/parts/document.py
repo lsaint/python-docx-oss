@@ -54,6 +54,24 @@ class DocumentPart(StoryPart):
         rId = self.relate_to(header_part, RT.HEADER)
         return header_part, rId
 
+    def delete_custom_xml_part(self, part: CustomXmlPart) -> None:
+        """Delete a Custom XML part related to this document.
+
+        Related Custom XML property parts are detached with the part and omitted from
+        the package when it is next saved.
+        """
+        matching_rIds = [
+            rId
+            for rId, rel in self.rels.items()
+            if rel.reltype == RT.CUSTOM_XML and not rel.is_external and rel.target_part is part
+        ]
+        if not matching_rIds:
+            raise ValueError(f"part '{part.partname}' is not related to this document")
+
+        part.drop_rels(lambda rel: rel.reltype == RT.CUSTOM_XML_PROPS)
+        for rId in matching_rIds:
+            del self.rels[rId]
+
     @property
     def comments(self) -> Comments:
         """|Comments| object providing access to the comments added to this document."""

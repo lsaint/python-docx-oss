@@ -28,6 +28,11 @@ class Relationships(Dict[str, "_Relationship"]):
             self._target_parts_by_rId[rId] = target
         return rel
 
+    def __delitem__(self, rId: str) -> None:
+        """Remove the relationship and its cached target-part reference."""
+        super().__delitem__(rId)
+        self._target_parts_by_rId.pop(rId, None)
+
     def get_or_add(self, reltype: str, target_part: Part) -> _Relationship:
         """Return relationship of `reltype` to `target_part`, newly added if not already
         present in collection."""
