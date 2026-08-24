@@ -73,6 +73,33 @@ class DescribeWordDocumentRoundTrips:
         assert "word/styles.xml" in package
         assert not any(name.startswith("word/media/") for name in package)
 
+    def it_creates_independent_document_copies_from_one_snapshot(self):
+        source = Document(
+            io.BytesIO(_fixture("customxml", "multiple-custom-xml-parts.docx").read_bytes())
+        )
+        source.add_paragraph("Shared snapshot")
+
+        document_b = source.copy()
+        document_c = source.copy()
+        document_d = source.copy()
+        document_b.add_paragraph("Version B")
+        document_c.add_paragraph("Version C")
+        document_d.part.custom_xml_parts[0].add_item("version", "D")
+
+        assert source.part.package is not document_b.part.package
+        assert document_b.part.package is not document_c.part.package
+        assert document_c.part.package is not document_d.part.package
+        assert source.paragraphs[-1].text == "Shared snapshot"
+        assert document_b.paragraphs[-1].text == "Version B"
+        assert document_c.paragraphs[-1].text == "Version C"
+        assert document_d.paragraphs[-1].text == "Shared snapshot"
+        assert len(source.part.custom_xml_parts[0].items) == 2
+        assert len(document_d.part.custom_xml_parts[0].items) == 3
+
+        reopened = Document(io.BytesIO(document_d.to_bytes()))
+        assert reopened.paragraphs[-1].text == "Shared snapshot"
+        assert reopened.part.custom_xml_parts[0].items[-1].text == "D"
+
     def it_preserves_a_floating_picture(self):
         package = _round_trip(_fixture("drawing", "word-floating-picture.docx"))
         document = _xml(package, "word/document.xml")

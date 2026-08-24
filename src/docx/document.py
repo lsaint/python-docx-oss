@@ -5,8 +5,10 @@
 
 from __future__ import annotations
 
+import io
 from typing import IO, TYPE_CHECKING, Iterator, List, Sequence
 
+from docx.api import Document as open_document
 from docx.blkcntnr import BlockItemContainer
 from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_BREAK
@@ -182,6 +184,10 @@ class Document(ElementProxy):
         """A |CoreProperties| object providing Dublin Core properties of document."""
         return self._part.core_properties
 
+    def copy(self) -> Document:
+        """Return an independent in-memory snapshot of this document."""
+        return open_document(io.BytesIO(self.to_bytes()))
+
     @property
     def custom_properties(self) -> CustomProperties:
         """A |CustomProperties| object providing custom properties of document."""
@@ -248,6 +254,12 @@ class Document(ElementProxy):
         list.
         """
         return self._body.tables
+
+    def to_bytes(self) -> bytes:
+        """Serialize this document as a complete in-memory DOCX package."""
+        with io.BytesIO() as stream:
+            self.save(stream)
+            return stream.getvalue()
 
     @property
     def _block_width(self) -> Length:

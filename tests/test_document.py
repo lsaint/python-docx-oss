@@ -202,6 +202,14 @@ class DescribeDocument:
 
         document_part_.save.assert_called_once_with("foobar.docx")
 
+    def it_can_serialize_the_document_to_bytes(self, document_part_: Mock):
+        document_part_.save.side_effect = lambda stream: stream.write(b"docx-package")
+        document = Document(cast(CT_Document, element("w:document")), document_part_)
+
+        content = document.to_bytes()
+
+        assert content == b"docx-package"
+
     def it_provides_access_to_the_comments(self, document_part_: Mock, comments_: Mock):
         document_part_.comments = comments_
         document = Document(cast(CT_Document, element("w:document")), document_part_)

@@ -92,5 +92,23 @@ After saving, rewind the output stream before reading it or opening it again::
 Always open ``.docx`` files in binary mode (``"rb"`` for reading and ``"wb"``
 for writing).
 
+Exporting and copying in memory
+-------------------------------
+
+Use :meth:`Document.to_bytes <docx.document.Document.to_bytes>` when the complete
+DOCX package needs to be uploaded, cached, returned over HTTP, or stored in a
+database::
+
+    content = document.to_bytes()
+
+Use :meth:`Document.copy <docx.document.Document.copy>` to create an independent
+snapshot that can be modified without changing the source document::
+
+    customer_document = document.copy()
+    customer_document.add_paragraph("Customer-specific content")
+
+The copy has its own XML trees, parts, and relationships. Both operations stay
+in memory and do not create temporary files.
+
 Okay, so you've got a document open and are pretty sure you can save it
 somewhere later. Next step is to get some content in there ...
