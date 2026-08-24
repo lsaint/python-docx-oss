@@ -18,7 +18,7 @@ classifiers = [
   "Topic :: Office/Business :: Office Suites",
   "Topic :: Software Development :: Libraries",
 ]
-dependencies = ["lxml>=3.1.0", "typing_extensions>=4.9.0"]
+dependencies = ["lxml>=6.1.0", "typing_extensions>=4.9.0"]
 description = "Create, read, and update Microsoft Word .docx files."
 dynamic = ["version"]
 keywords = ["docx", "office", "openxml", "word"]
@@ -41,7 +41,7 @@ dev = [
   "behave>=1.2.6",
   "pyparsing>=3.2.3",
   "pyright>=1.1.401",
-  "pytest>=8.4.0",
+  "pytest>=9.0.3",
   "ruff>=0.11.13",
   "sphinx-book-theme",
   "tox>=4.26.0",
