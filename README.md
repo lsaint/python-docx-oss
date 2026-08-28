@@ -36,7 +36,8 @@ or low-level package and relationship access.
 | Latin and East Asian font controls | Stable | `run.font.name`, `run.font.hAnsi`, `run.font.eastAsia` |
 | Low-level OPC parts and relationships | Stable | `document.part.package`, `part.rels` |
 | In-memory read, export, and independent copies | Stable | `Document()`, `to_bytes()`, `copy()` |
-| Package inspection, diff, and sanitization | Planned | — |
+| Document sanitization | Development | `document.sanitize()` |
+| Package inspection and diff | Planned | — |
 
 ## Installation
 

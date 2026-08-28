@@ -22,7 +22,9 @@ supports capabilities needed by more demanding document workflows:
 * SVG and EMF vector images;
 * separate Latin and East Asian font settings;
 * document custom properties; and
-* multiple Custom XML parts that survive a load/save round trip.
+* multiple Custom XML parts that survive a load/save round trip; and
+* explicit package-level sanitization of metadata, comments, web extensions,
+  and formatting revision history.
 
 Here is a small example:
 
@@ -94,6 +96,7 @@ User Guide
    user/styles-understanding
    user/styles-using
    user/comments
+   user/sanitization
    user/shapes
    user/custom-properties
    user/custom-xml
@@ -113,6 +116,7 @@ API Documentation
    api/table
    api/section
    api/comments
+   api/sanitize
    api/shape
    api/dml
    api/shared

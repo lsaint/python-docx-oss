@@ -9,6 +9,7 @@ import datetime as dt
 from typing import TYPE_CHECKING
 
 from docx.oxml.coreprops import CT_CoreProperties
+from docx.oxml.ns import qn
 
 if TYPE_CHECKING:
     from docx.oxml.coreprops import CT_CoreProperties
@@ -20,6 +21,40 @@ class CoreProperties:
 
     def __init__(self, element: CT_CoreProperties):
         self._element = element
+
+    def deduplicate(self, *property_names: str) -> set[str]:
+        """Remove duplicate XML elements for the named core properties.
+
+        The first occurrence is retained so callers can subsequently normalize its
+        value through the regular property setter.
+        """
+        element_tags = {
+            "author": qn("dc:creator"),
+            "category": qn("cp:category"),
+            "comments": qn("dc:description"),
+            "content_status": qn("cp:contentStatus"),
+            "created": qn("dcterms:created"),
+            "identifier": qn("dc:identifier"),
+            "keywords": qn("cp:keywords"),
+            "language": qn("dc:language"),
+            "last_modified_by": qn("cp:lastModifiedBy"),
+            "last_printed": qn("cp:lastPrinted"),
+            "modified": qn("dcterms:modified"),
+            "revision": qn("cp:revision"),
+            "subject": qn("dc:subject"),
+            "title": qn("dc:title"),
+            "version": qn("cp:version"),
+        }
+        changed: set[str] = set()
+        for property_name in property_names:
+            try:
+                tag = element_tags[property_name]
+            except KeyError as exc:
+                raise ValueError(f"Unsupported core property: {property_name}") from exc
+            for duplicate in self._element.findall(tag)[1:]:
+                self._element.remove(duplicate)
+                changed.add(property_name)
+        return changed
 
     @property
     def author(self):

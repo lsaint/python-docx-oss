@@ -137,6 +137,22 @@ class DescribeCoreProperties:
 
         assert core_properties._element.xml == expected_xml
 
+    def it_can_deduplicate_any_core_property(self):
+        xml = self.coreProperties("dc:title", "first").replace(
+            "</cp:coreProperties>",
+            "<dc:title>second</dc:title>"
+            "<cp:category>first</cp:category>"
+            "<cp:category>second</cp:category>"
+            "</cp:coreProperties>",
+        )
+        core_properties = CoreProperties(cast("CT_CoreProperties", parse_xml(xml)))
+
+        changed = core_properties.deduplicate("title", "category")
+
+        assert changed == {"title", "category"}
+        assert core_properties._element.xml.count("<dc:title>") == 1
+        assert core_properties._element.xml.count("<cp:category>") == 1
+
     # fixtures -------------------------------------------------------
 
     def coreProperties(self, tagname: str, str_val: str, attrs: str = "") -> str:

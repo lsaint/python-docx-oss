@@ -1,5 +1,11 @@
 ## Release History
 
+**Unreleased**
+
+- Added opt-in package-level document sanitization for personal metadata,
+  comments, web extensions, and formatting revision history.
+- Added structured sanitization reports and real Word comment round-trip coverage.
+
 **0.2.0 (2026-08-24)**
 
 - Added direct loading from raw DOCX bytes with ``Document(bytes)``.

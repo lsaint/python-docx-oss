@@ -12,6 +12,7 @@ from docx.api import Document as open_document
 from docx.blkcntnr import BlockItemContainer
 from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_BREAK
+from docx.sanitize import SanitizationReport, sanitize_document
 from docx.section import Section, Sections
 from docx.shared import ElementProxy, Emu, Inches, Length
 from docx.text.run import Run
@@ -228,6 +229,27 @@ class Document(ElementProxy):
         file-like object.
         """
         self._part.save(path_or_stream)
+
+    def sanitize(
+        self,
+        *,
+        personal_metadata: bool = False,
+        comments: bool = False,
+        web_extensions: bool = False,
+        formatting_revisions: bool = False,
+    ) -> SanitizationReport:
+        """Apply the explicitly selected package-level cleanup operations.
+
+        Every option defaults to |False| because sanitization is destructive. The
+        returned report describes all package and XML changes made to this document.
+        """
+        return sanitize_document(
+            self,
+            personal_metadata=personal_metadata,
+            comments=comments,
+            web_extensions=web_extensions,
+            formatting_revisions=formatting_revisions,
+        )
 
     @property
     def sections(self) -> Sections:

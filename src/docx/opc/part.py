@@ -144,6 +144,10 @@ class Part:
             rel = self.rels.get_or_add(reltype, cast(Part, target))
             return rel.rId
 
+    def replace_blob(self, blob: bytes) -> None:
+        """Replace the serialized payload of this non-XML part."""
+        self._blob = blob
+
     @property
     def related_parts(self):
         """Dictionary mapping related parts by rId, so child objects can resolve
@@ -234,6 +238,10 @@ class XmlPart(Part):
     def element(self):
         """The root XML element of this XML part."""
         return self._element
+
+    def replace_blob(self, blob: bytes) -> None:
+        """Reject raw replacement because this part serializes from ``element``."""
+        raise TypeError("cannot replace the blob of an XmlPart; replace its element instead")
 
     @element.setter
     def element(self, e: BaseOxmlElement):

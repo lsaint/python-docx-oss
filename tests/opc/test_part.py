@@ -78,6 +78,13 @@ class DescribePart:
         part = Part(PackURI("/part/name"), "content/type", blob)
         assert part.blob is blob
 
+    def it_can_replace_its_blob(self):
+        part = Part(PackURI("/part/name"), "content/type", b"before")
+
+        part.replace_blob(b"after")
+
+        assert part.blob == b"after"
+
     # fixtures ---------------------------------------------
 
     @pytest.fixture
@@ -370,6 +377,10 @@ class DescribeXmlPart:
     def it_can_set_its_element(self, part_fixture: XmlPart, new_element_: Mock):
         part_fixture.element = new_element_
         assert part_fixture.element is new_element_
+
+    def it_rejects_raw_blob_replacement(self, part_fixture: XmlPart):
+        with pytest.raises(TypeError, match="replace its element"):
+            part_fixture.replace_blob(b"<x/>")
 
     @pytest.mark.parametrize(
         ("part_cxml", "rel_should_be_dropped"),
