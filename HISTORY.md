@@ -2,6 +2,8 @@
 
 **Unreleased**
 
+**0.3.0 (2026-08-29)**
+
 - Added opt-in package-level document sanitization for personal metadata,
   comments, web extensions, and formatting revision history.
 - Added structured sanitization reports and real Word comment round-trip coverage.
