@@ -11,6 +11,7 @@ import pytest
 
 from docx import Document
 from docx.document import Document as DocumentType
+from docx.oxml.parser import parse_xml
 from docx.parts.customxml import CustomXmlPart
 
 FIXTURE = (
@@ -82,6 +83,28 @@ class DescribeMultipleCustomXmlParts:
         assert "customXml/itemProps3.xml" in names
         assert "customXml/_rels/item1.xml.rels" in names
         assert "customXml/_rels/item3.xml.rels" in names
+
+    def it_round_trips_replacing_a_custom_xml_part_element(self):
+        document = Document(io.BytesIO(FIXTURE.read_bytes()))
+        customers = _parts_by_name(document)["/customXml/item1.xml"]
+        wrapper = parse_xml('<wrapper xmlns="urn:python-docx-oss:wrapper" version="1"/>')
+        wrapper.append(customers.element)
+        customers.element = wrapper
+
+        output = io.BytesIO()
+        document.save(output)
+        reopened = Document(io.BytesIO(output.getvalue()))
+        replaced = _parts_by_name(reopened)["/customXml/item1.xml"]
+
+        assert replaced.tag == "{urn:python-docx-oss:wrapper}wrapper"
+        assert replaced.attrib["version"] == "1"
+        assert len(replaced.items) == 1
+        assert replaced.items[0].tag == f"{{{CUSTOMERS_NS}}}customers"
+        assert len(replaced.items[0]) == 2
+        with ZipFile(io.BytesIO(output.getvalue())) as package:
+            names = set(package.namelist())
+        assert "customXml/itemProps1.xml" in names
+        assert "customXml/_rels/item1.xml.rels" in names
 
     def it_rejects_an_explicit_partname_collision(self):
         document = Document(io.BytesIO(FIXTURE.read_bytes()))

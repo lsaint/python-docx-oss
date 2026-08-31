@@ -10,6 +10,10 @@ from zipfile import ZipFile
 from lxml import etree
 
 from docx import Document
+from docx.opc.constants import CONTENT_TYPE as CT
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 FIXTURE_DIR = Path(__file__).parent.parent / "fixtures"
 TEST_FILE_DIR = Path(__file__).parent.parent / "test_files"
@@ -72,6 +76,60 @@ class DescribeWordDocumentRoundTrips:
         assert "word/document.xml" in package
         assert "word/styles.xml" in package
         assert not any(name.startswith("word/media/") for name in package)
+
+    def it_round_trips_a_default_numbering_part_when_the_source_has_none(self):
+        fixture = _fixture("documents", "word-blank.docx")
+        with ZipFile(fixture) as source_package:
+            assert "word/numbering.xml" not in source_package.namelist()
+
+        document = Document(io.BytesIO(fixture.read_bytes()))
+        numbering_part = document.part.numbering_part
+        output = document.to_bytes()
+        reopened = Document(output)
+
+        assert str(numbering_part.partname) == "/word/numbering.xml"
+        assert str(reopened.part.numbering_part.partname) == "/word/numbering.xml"
+        with ZipFile(io.BytesIO(output)) as package_file:
+            package = {name: package_file.read(name) for name in package_file.namelist()}
+        assert "word/numbering.xml" in package
+        assert _content_type(package, "/word/numbering.xml") == CT.WML_NUMBERING
+        relationships = _xml(package, "word/_rels/document.xml.rels")
+        numbering_relationship = relationships.find(
+            f"{{{PR_NS}}}Relationship[@Type='{RT.NUMBERING}']"
+        )
+        assert numbering_relationship is not None
+        assert numbering_relationship.get("Target") == "numbering.xml"
+
+    def it_round_trips_a_changed_external_hyperlink_target(self):
+        document = Document(_fixture("documents", "word-blank.docx").read_bytes())
+        paragraph = document.add_paragraph()
+        relationship_id = document.part.relate_to(
+            "https://example.invalid/objects/old-id",
+            RT.HYPERLINK,
+            is_external=True,
+        )
+        hyperlink = OxmlElement("w:hyperlink")
+        hyperlink.set(qn("r:id"), relationship_id)
+        run = OxmlElement("w:r")
+        text = OxmlElement("w:t")
+        text.text = "Business link"
+        run.append(text)
+        hyperlink.append(run)
+        paragraph._p.append(hyperlink)
+
+        new_target = "https://example.invalid/objects/new-id?position=begin"
+        document.part.rels[relationship_id].target_ref = new_target
+        output = document.to_bytes()
+        reopened = Document(output)
+
+        assert reopened.paragraphs[-1].hyperlinks[0].text == "Business link"
+        assert reopened.paragraphs[-1].hyperlinks[0].address == new_target
+        with ZipFile(io.BytesIO(output)) as package_file:
+            relationships = etree.fromstring(package_file.read("word/_rels/document.xml.rels"))
+        relationship = relationships.find(f"{{{PR_NS}}}Relationship[@Id='{relationship_id}']")
+        assert relationship is not None
+        assert relationship.get("Target") == new_target
+        assert relationship.get("TargetMode") == "External"
 
     def it_creates_independent_document_copies_from_one_snapshot(self):
         source = Document(_fixture("customxml", "multiple-custom-xml-parts.docx").read_bytes())

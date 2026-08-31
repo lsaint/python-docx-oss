@@ -9,6 +9,7 @@ from zipfile import ZipFile
 from lxml import etree
 
 from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.opc.packuri import PackURI
 from docx.opc.part import Part
 from docx.oxml import OxmlElement
@@ -143,6 +144,56 @@ def it_removes_the_entire_web_extension_relationship_tree():
     assert len(report.removed_relationships) == 2
     with ZipFile(io.BytesIO(package_bytes)) as archive:
         assert not any(name.startswith("word/webextensions/") for name in archive.namelist())
+
+
+def it_round_trips_cleanup_without_removing_application_content():
+    document = Document(COMMENTS_FIXTURE)
+    custom_xml = document.part.add_custom_xml_part(
+        '<application xmlns="urn:python-docx-oss:application" version="1"/>'
+    )
+    business_relationship_id = document.part.relate_to(
+        "https://example.invalid/business/object-id",
+        RT.HYPERLINK,
+        is_external=True,
+    )
+    package = document.part.package
+    taskpanes = Part(
+        PackURI("/word/webextensions/taskpanes.xml"),
+        "application/vnd.ms-office.webextensiontaskpanes+xml",
+        b"<wetp:taskpanes xmlns:wetp='urn:test'/>",
+        package,
+    )
+    extension = Part(
+        PackURI("/word/webextensions/webextension1.xml"),
+        "application/vnd.ms-office.webextension+xml",
+        b"<we:webextension xmlns:we='urn:test'/>",
+        package,
+    )
+    package.relate_to(
+        taskpanes,
+        "http://schemas.microsoft.com/office/2011/relationships/webextensiontaskpanes",
+    )
+    taskpanes.relate_to(
+        extension,
+        "http://schemas.microsoft.com/office/2011/relationships/webextension",
+    )
+
+    report = document.sanitize(comments=True, web_extensions=True)
+    output = document.to_bytes()
+    reopened = Document(output)
+
+    assert report.removed_comment_markers > 0
+    assert str(custom_xml.partname) not in report.removed_parts
+    assert reopened.part.custom_xml_parts[0].tag == ("{urn:python-docx-oss:application}application")
+    assert reopened.part.rels[business_relationship_id].target_ref == (
+        "https://example.invalid/business/object-id"
+    )
+    assert reopened.sanitize(comments=True, web_extensions=True).changed is False
+    with ZipFile(io.BytesIO(output)) as archive:
+        names = archive.namelist()
+        assert "customXml/item1.xml" in names
+        assert "word/comments.xml" not in names
+        assert not any(name.startswith("word/webextensions/") for name in names)
 
 
 def it_removes_formatting_revisions_and_keeps_current_formatting():
