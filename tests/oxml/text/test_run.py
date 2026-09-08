@@ -48,3 +48,8 @@ class DescribeCT_R:
         r.texts = "updated"
 
         assert r.text == "updated"
+
+    def it_iterates_text_without_duplication(self):
+        r = cast(CT_R, element('w:r/(w:br,w:t"foo",w:cr,w:t"bar")'))
+
+        assert "".join(r.itertext()) == "foobar"

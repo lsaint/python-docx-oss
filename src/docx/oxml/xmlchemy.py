@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Callable, Sequence, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Sequence, Type, TypeVar
 
 from lxml import etree
 from lxml.etree import ElementBase, _Element  # pyright: ignore[reportPrivateUsage]
@@ -653,6 +653,11 @@ class ZeroOrOneChoice(_BaseChildElement):
         return "_remove_%s" % self._prop_name
 
 
+# -- raw lxml text/tail accessors, used to bypass `.text` property overrides --
+_raw_text = _Element.text.__get__
+_raw_tail = _Element.tail.__get__
+
+
 # -- lxml typing isn't quite right here, just ignore this error on _Element --
 class BaseOxmlElement(etree.ElementBase, metaclass=MetaOxmlElement):
     """Effective base class for all custom element classes.
@@ -682,6 +687,22 @@ class BaseOxmlElement(etree.ElementBase, metaclass=MetaOxmlElement):
         else:
             self.append(elm)
         return elm
+
+    def itertext(self, tag: Any | None = None, *tags: Any, with_tail: bool = True) -> Iterator[str]:
+        """Iterate over text content of this element and its descendants.
+
+        Bypasses the overridden `.text` properties on custom oxml element classes (such as
+        `CT_P`, `CT_R`, `CT_Hyperlink`), which would otherwise duplicate text, so standard
+        lxml `itertext()` semantics are preserved.
+        """
+        for node in self.iter(tag, *tags):
+            text = _raw_text(node)
+            if text:
+                yield text
+            if with_tail and node is not self:
+                tail = _raw_tail(node)
+                if tail:
+                    yield tail
 
     def remove_all(self, *tagnames: str) -> None:
         """Remove child elements with tagname (e.g. "a:p") in `tagnames`."""

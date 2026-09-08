@@ -48,6 +48,16 @@ class DescribeBaseOxmlElement:
         element.remove_all(*tagnames)
         assert element.xml == expected_xml
 
+    def it_iterates_text_without_duplication_when_text_property_is_overridden(self):
+        elm = parse_xml(
+            '<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            "<w:r><w:t>foo</w:t></w:r>"
+            "<w:hyperlink><w:r><w:t>bar</w:t></w:r></w:hyperlink>"
+            "</w:p>"
+        )
+        assert "".join(elm.itertext()) == "foobar"
+        assert list(elm.itertext(qn("w:t"))) == ["foo", "bar"]
+
     # fixtures ---------------------------------------------
 
     @pytest.fixture(
