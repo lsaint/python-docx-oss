@@ -281,7 +281,7 @@ class _Cell(BlockItemContainer):
         tc.clear_content()
         p = tc.add_p()
         r = p.add_r()
-        r.text = text
+        r.texts = text
 
     @property
     def vertical_alignment(self):

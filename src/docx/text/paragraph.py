@@ -160,7 +160,7 @@ class Paragraph(StoryChild):
         character is mapped to a line break. Paragraph-level formatting, such as style,
         is preserved. All run-level formatting, such as bold or italic, is removed.
         """
-        return self._p.text
+        return self._p.texts
 
     @text.setter
     def text(self, text: str | None):

@@ -1,6 +1,7 @@
 """Test suite for docx.oxml.xmlchemy."""
 
 import pytest
+from lxml import etree
 
 from docx.oxml.exceptions import InvalidXmlError
 from docx.oxml.ns import qn
@@ -48,7 +49,7 @@ class DescribeBaseOxmlElement:
         element.remove_all(*tagnames)
         assert element.xml == expected_xml
 
-    def it_iterates_text_without_duplication_when_text_property_is_overridden(self):
+    def it_iterates_text_without_duplication_on_oxml_elements(self):
         elm = parse_xml(
             '<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
             "<w:r><w:t>foo</w:t></w:r>"
@@ -57,6 +58,24 @@ class DescribeBaseOxmlElement:
         )
         assert "".join(elm.itertext()) == "foobar"
         assert list(elm.itertext(qn("w:t"))) == ["foo", "bar"]
+
+    def it_iterates_text_without_duplication_on_unregistered_bare_elements(self):
+        # Tags like w:ins, w:del, w:txbxContent are not registered in element_class_lookup
+        # and remain bare lxml.etree._Element instances.
+        ins = parse_xml(
+            '<w:ins xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+            ' w:id="1" w:author="t" w:date="2026-01-01T00:00:00Z">'
+            "<w:r><w:t>Beta</w:t></w:r>"
+            "</w:ins>"
+        )
+        assert type(ins) is etree._Element
+        assert list(ins.itertext()) == ["Beta"]
+        assert "".join(ins.itertext()) == "Beta"
+
+        # Verify CT_R inside it has native None for .text and "Beta" for .texts
+        r = ins.findall(qn("w:r"))[0]
+        assert r.text is None
+        assert r.texts == "Beta"
 
     # fixtures ---------------------------------------------
 

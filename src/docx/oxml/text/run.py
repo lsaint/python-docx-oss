@@ -127,29 +127,25 @@ class CT_R(BaseOxmlElement):
         rPr.style = style
 
     @property
-    def text(self) -> str:
+    def texts(self) -> str:
         """The textual content of this run.
 
         Inner-content child elements like `w:tab` are translated to their text
         equivalent.
+
+        Note: We intentionally do NOT define `@property def text` on CT_R or any
+        other oxml element, because doing so overrides lxml's Cython descriptor
+        `_Element.text`, which corrupts lxml `itertext()` on parent elements (such
+        as bare `_Element` revision tags `w:ins`, `w:del`, etc.).
         """
         return "".join(
             str(e) for e in self.xpath("w:br | w:cr | w:noBreakHyphen | w:ptab | w:t | w:tab")
         )
 
-    @text.setter
-    def text(self, text: str):  # pyright: ignore[reportIncompatibleMethodOverride]
-        self.clear_content()
-        _RunContentAppender.append_to_run_from_text(self, text)
-
-    @property
-    def texts(self) -> str:
-        """Alias for `text` property for compatibility with python-docx-oss."""
-        return self.text
-
     @texts.setter
     def texts(self, text: str):
-        self.text = text
+        self.clear_content()
+        _RunContentAppender.append_to_run_from_text(self, text)
 
     def _insert_rPr(self, rPr: CT_RPr) -> CT_RPr:
         self.insert(0, rPr)

@@ -98,7 +98,7 @@ class Hyperlink(Parented):
         respectively. Note that rendered page-breaks can occur within a hyperlink but
         they are not reflected in this text.
         """
-        return self._hyperlink.text
+        return self._hyperlink.texts
 
     @property
     def url(self) -> str:

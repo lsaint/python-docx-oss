@@ -38,18 +38,22 @@ class DescribeCT_R:
         cxml = 'w:r/(w:br,w:cr,w:noBreakHyphen,w:ptab,w:t"foobar",w:tab)'
         r = cast(CT_R, element(cxml))
 
-        assert r.text == "\n\n-\tfoobar\t"
+        assert r.texts == "\n\n-\tfoobar\t"
 
-    def it_provides_texts_alias_for_text(self):
+    def it_can_replace_its_text(self):
         r = cast(CT_R, element('w:r/w:t"alias"'))
 
         assert r.texts == "alias"
 
         r.texts = "updated"
 
-        assert r.text == "updated"
+        assert r.texts == "updated"
 
     def it_iterates_text_without_duplication(self):
         r = cast(CT_R, element('w:r/(w:br,w:t"foo",w:cr,w:t"bar")'))
 
         assert "".join(r.itertext()) == "foobar"
+
+    def it_does_not_override_element_text_descriptor(self):
+        r = cast(CT_R, element('w:r/w:t"foo"'))
+        assert r.text is None

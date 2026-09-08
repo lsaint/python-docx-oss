@@ -37,9 +37,9 @@ class CT_Hyperlink(BaseOxmlElement):
         return self.xpath("./w:r/w:lastRenderedPageBreak")
 
     @property
-    def text(self) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
+    def texts(self) -> str:
         """The textual content of this hyperlink.
 
         `CT_Hyperlink` stores the hyperlink-text as one or more `w:r` children.
         """
-        return "".join(r.text for r in self.xpath("w:r"))
+        return "".join(r.texts for r in self.xpath("w:r"))

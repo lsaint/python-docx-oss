@@ -233,11 +233,11 @@ class Run(StoryChild):
         `<w:cr/>` element. Any existing run content is replaced. Run formatting is
         preserved.
         """
-        return self._r.text
+        return self._r.texts
 
     @text.setter
     def text(self, text: str):
-        self._r.text = text
+        self._r.texts = text
 
     @property
     def underline(self) -> bool | WD_UNDERLINE | None:

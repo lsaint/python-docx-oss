@@ -41,5 +41,6 @@ class DescribeCT_Hyperlink:
         rs = hyperlink.r_lst
 
         assert [type(r) for r in rs] == [CT_R, CT_R]
-        assert rs[0].text == "blog"
-        assert rs[1].text == " post"
+        assert rs[0].texts == "blog"
+        assert rs[1].texts == " post"
+        assert hyperlink.texts == "blog post"
