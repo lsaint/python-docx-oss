@@ -2,6 +2,11 @@
 
 **Unreleased**
 
+**0.3.1 (2026-09-08)**
+
+- Fixed an issue where calling `itertext()` on oxml elements produced duplicated
+  text due to overridden `.text` properties.
+
 **0.3.0 (2026-08-29)**
 
 - Added opt-in package-level document sanitization for personal metadata,
