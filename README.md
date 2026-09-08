@@ -126,6 +126,11 @@ available through `Document.add_float_picture()` and `Run.add_float_picture()`.
 
 - The project maintains broad compatibility with the public `python-docx` API while
   following its own versioning and product roadmap.
+- Clean lxml integration: Low-level OXML elements avoid shadowing lxml's Cython
+  `_Element.text` descriptor (using `.texts` internally). This guarantees that standard
+  `element.itertext()` on parent elements and untyped revision nodes (`w:ins`, `w:del`,
+  `w:txbxContent`) never duplicates text, while high-level proxy APIs (`paragraph.text`,
+  `run.text`) remain fully compatible with `python-docx`.
 - Compatibility does not extend to every private or internal `python-docx` API. Test
   those integrations before migrating production systems.
 - The SDK focuses exclusively on DOCX. It is not a general XLSX/PPTX Office suite.

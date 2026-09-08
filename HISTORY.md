@@ -2,7 +2,15 @@
 
 **Unreleased**
 
-**0.3.1 (2026-09-08)**
+**0.3.2 (2026-09-08)**
+
+- Restored the 0.0.12 architecture where OXML elements (`CT_R`, `CT_P`, `CT_Hyperlink`)
+  do not override lxml's Cython `_Element.text` descriptor, resolving text duplication
+  when calling `itertext()` on bare `lxml.etree._Element` parent nodes (such as revision
+  tags `w:ins`, `w:del`, and container tags like `w:txbxContent`).
+- Standardized OXML rich-text extraction and assignment on `.texts`, while maintaining full
+  compatibility for public proxy APIs (`Paragraph.text`, `Run.text`, `Hyperlink.text`, `_Cell.text`).
+- Documented the intentional upstream difference in the compatibility guide.
 
 - Fixed an issue where calling `itertext()` on oxml elements produced duplicated
   text due to overridden `.text` properties.
