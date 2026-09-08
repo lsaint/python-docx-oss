@@ -43,7 +43,7 @@ coverage:
 	uv run pytest --cov-report term-missing --cov=docx tests/
 
 docs:
-	$(MAKE) -C docs html
+	$(MAKE) -C docs html SPHINXBUILD="uv run sphinx-build"
 
 install:
 	pip install -Ue .
