@@ -97,7 +97,7 @@ class DescribeMultipleCustomXmlParts:
         replaced = _parts_by_name(reopened)["/customXml/item1.xml"]
 
         assert replaced.tag == "{urn:python-docx-oss:wrapper}wrapper"
-        assert replaced.attrib["version"] == "1"
+        assert replaced.attrib["version"] == "1"  # pyright: ignore[reportUnknownMemberType]
         assert len(replaced.items) == 1
         assert replaced.items[0].tag == f"{{{CUSTOMERS_NS}}}customers"
         assert len(replaced.items[0]) == 2

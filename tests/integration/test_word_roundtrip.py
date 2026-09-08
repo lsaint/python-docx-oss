@@ -115,7 +115,7 @@ class DescribeWordDocumentRoundTrips:
         text.text = "Business link"
         run.append(text)
         hyperlink.append(run)
-        paragraph._p.append(hyperlink)
+        paragraph._p.append(hyperlink)  # pyright: ignore[reportPrivateUsage]
 
         new_target = "https://example.invalid/objects/new-id?position=begin"
         document.part.rels[relationship_id].target_ref = new_target
