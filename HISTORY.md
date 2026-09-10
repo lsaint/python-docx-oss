@@ -1,6 +1,10 @@
 ## Release History
 
-**Unreleased**
+**0.3.3 (2026-09-10)**
+
+- Switched PyPI distribution to GitHub Actions automated releases using PyPI Trusted Publishing (OIDC).
+- Added support for workflow_dispatch triggers targeting TestPyPI and PyPI.
+- Streamlined release validation, test gatekeeping, and distribution verification.
 
 **0.3.2 (2026-09-08)**
 
