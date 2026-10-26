@@ -97,6 +97,8 @@ User Guide
    user/styles-using
    user/comments
    user/sanitization
+   user/inspection
+   user/transformations
    user/shapes
    user/custom-properties
    user/custom-xml
@@ -117,6 +119,8 @@ API Documentation
    api/section
    api/comments
    api/sanitize
+   api/inspection
+   api/transforms
    api/shape
    api/dml
    api/shared

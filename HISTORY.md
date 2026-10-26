@@ -1,5 +1,15 @@
 ## Release History
 
+**Unreleased**
+
+- Added explicit, transactional empty Custom XML repair and conservative hyperlink
+  field conversion and run merging, with immutable change reports and selection callbacks.
+- Added read-only package inspection with immutable inventories, structured findings,
+  empty and whitespace-only XML detection, and streaming hyperlink feature detection
+  across Word story parts.
+- Added configurable SHA-256 package fingerprints with incremental payload processing,
+  XML canonicalization, and explicit part, relationship, and XML exclusions.
+
 **0.3.3 (2026-09-10)**
 
 - Switched PyPI distribution to GitHub Actions automated releases using PyPI Trusted Publishing (OIDC).

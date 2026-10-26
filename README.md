@@ -37,7 +37,10 @@ or low-level package and relationship access.
 | Low-level OPC parts and relationships | Stable | `document.part.package`, `part.rels` |
 | In-memory read, export, and independent copies | Stable | `Document()`, `to_bytes()`, `copy()` |
 | Document sanitization | Development | `document.sanitize()` |
-| Package inspection and diff | Planned | — |
+| Read-only package inspection and story feature scanning | Development | `inspect()` |
+| Configurable package-content fingerprints | Development | `fingerprint()`, `FingerprintPolicy` |
+| Explicit empty Custom XML repair and hyperlink normalization | Development | `repair()`, `normalize()` |
+| Package and semantic diff | Planned | — |
 
 ## Installation
 
@@ -86,6 +89,42 @@ document.save("output.docx")
 ```
 
 ## Advanced Capabilities
+
+### Package inspection and fingerprints
+
+Inspect damaged documents before opening them, without loading media payloads:
+
+```python
+from docx import FingerprintPolicy, fingerprint, inspect
+
+report = inspect("input.docx")
+for finding in report.findings:
+    print(finding.code, finding.partname)
+
+digest = fingerprint("input.docx", policy=FingerprintPolicy(exclude_parts=("docProps/*",)))
+```
+
+These APIs leave inputs unchanged and restore seekable stream positions. Fingerprints
+ignore ZIP metadata and member ordering; all content is included unless explicitly
+excluded. See [Package inspection and fingerprints](docs/user/inspection.rst) for
+finding codes, XML comparison semantics, and policy rules.
+
+### Explicit repair and normalization
+
+```python
+from docx import normalize, repair
+
+repaired = repair(source_bytes, empty_custom_xml=True)
+if repaired.report.succeeded:
+    normalized = normalize(repaired.content, hyperlink_fields=True, hyperlink_runs=True)
+    if normalized.report.succeeded:
+        output_bytes = normalized.content
+```
+
+Operations are disabled by default. Results include committed changes, skipped cases,
+and errors; validation failures return the original bytes. See
+[Repair and normalization](docs/user/transformations.rst) for supported structures,
+selection callbacks, and preservation rules.
 
 ### Custom properties
 
@@ -171,8 +210,8 @@ uv run pyright
 ## Project Status
 
 The current focus is stabilizing the independent SDK baseline, its in-memory workflows,
-and its advanced OOXML capabilities before expanding document inspection, comparison,
-sanitization, composition, and validation APIs.
+sanitization, and read-only package analysis before expanding document comparison,
+composition, and validation APIs.
 
 ## Credits
 
