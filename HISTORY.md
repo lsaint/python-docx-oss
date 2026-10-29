@@ -1,6 +1,6 @@
 ## Release History
 
-**Unreleased**
+**0.4.0 (2026-10-29)**
 
 - Added explicit, transactional empty Custom XML repair and conservative hyperlink
   field conversion and run merging, with immutable change reports and selection callbacks.
