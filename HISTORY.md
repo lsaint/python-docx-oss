@@ -1,5 +1,9 @@
 ## Release History
 
+**Unreleased**
+
+- Fixed hyperlink field conversion when proofing markers appear in the result.
+
 **0.4.0 (2026-10-29)**
 
 - Added explicit, transactional empty Custom XML repair and conservative hyperlink

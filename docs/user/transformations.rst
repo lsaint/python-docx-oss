@@ -81,7 +81,8 @@ Hyperlink normalization
 ``hyperlink_fields=True`` converts supported ``HYPERLINK`` fields into standard
 ``w:hyperlink`` elements. It handles simple fields and paragraph-local complex
 fields with separate begin, instruction, separator, result, and end runs. Field
-instructions may span runs. Result runs retain their text and formatting.
+instructions may span runs. Result runs retain their text and formatting; proofing
+markers within the result remain in their original order.
 
 Supported targets include quoted or unquoted addresses, bookmark-only links,
 and address plus bookmark. Supported switches are ``\l`` (anchor), ``\o``

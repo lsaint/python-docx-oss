@@ -22,6 +22,33 @@ def _root(content: bytes, name: str = "word/document.xml") -> etree_Element:
 
 
 class DescribeHyperlinkFieldConversion:
+    def it_preserves_proofing_markers_inside_complex_field_results(self):
+        body = complex_field().replace(
+            "<w:r><w:rPr><w:i/></w:rPr><w:t>world</w:t></w:r>",
+            '<w:proofErr w:type="spellStart"/>'
+            "<w:r><w:rPr><w:i/></w:rPr><w:t>world</w:t></w:r>"
+            '<w:proofErr w:type="spellEnd"/>',
+        )
+        content = package(document_parts(body))
+        result = normalize(content, hyperlink_fields=True)
+        assert result.report.succeeded
+        assert result.report.changed
+        link = next(_root(result.content).iter(f"{{{W}}}hyperlink"))
+        assert [element.tag for element in link] == [
+            f"{{{W}}}r",
+            f"{{{W}}}proofErr",
+            f"{{{W}}}r",
+            f"{{{W}}}proofErr",
+        ]
+        assert [node.get(f"{{{W}}}type") for node in link.findall(f"{{{W}}}proofErr")] == [
+            "spellStart",
+            "spellEnd",
+        ]
+        assert Document(result.content).paragraphs[0].hyperlinks[0].text == "Hello world"
+        again = normalize(result.content, hyperlink_fields=True)
+        assert not again.report.changed
+        assert again.content == result.content
+
     def it_converts_complex_fields_preserving_result_run_formatting_and_text(self):
         content = package(document_parts(complex_field()))
         result = normalize(content, hyperlink_fields=True)

@@ -237,8 +237,9 @@ class HyperlinkNormalizer:
                 "commentRangeEnd",
             )
         }
-        return bool(elements) and all(
-            element.tag == w("r") and not any(node.tag in forbidden for node in element.iter())
+        return any(element.tag == w("r") for element in elements) and all(
+            (element.tag == w("proofErr") and len(element) == 0)
+            or (element.tag == w("r") and not any(node.tag in forbidden for node in element.iter()))
             for element in elements
         )
 
@@ -286,8 +287,6 @@ class HyperlinkNormalizer:
             len(marker) or set(marker.attrib) - {w("fldCharType"), w("dirty")} for marker in markers
         ):
             return False
-        if any(element.tag != w("r") for element in group):
-            return False
         separator = next(
             (index for index, element in enumerate(group) if markers[1].getparent() is element), -1
         )
@@ -300,7 +299,8 @@ class HyperlinkNormalizer:
             allowed = {w("rPr"), w("instrText"), w("fldChar")}
             run_metadata = {w(name) for name in ("rsidR", "rsidRPr", "rsidDel")}
             if (
-                any(node.tag not in allowed for node in element)
+                element.tag != w("r")
+                or any(node.tag not in allowed for node in element)
                 or set(element.attrib) - run_metadata
             ):
                 return False
