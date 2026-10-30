@@ -125,10 +125,56 @@ Content fingerprints
 Member ordering, compression, ZIP timestamps, directory entries, and other ZIP
 metadata do not affect the fingerprint. Member names and contents do. XML uses
 C14N 2.0 with comments, which normalizes attribute ordering, quote style, and
-empty-element spelling. Text whitespace and namespace prefixes are preserved.
+empty-element spelling. By default, whitespace-only text between children of known
+Word structural elements is ignored. Text elements, mixed Custom XML content, and
+elements under ``xml:space="preserve"`` retain whitespace; unknown elements are
+preserved conservatively. Set ``ignore_structural_whitespace=False`` on the policy
+to retain structural whitespace. Namespace prefixes and declarations are preserved,
+including declarations referenced only from attribute values. This rule applies
+only to parts declared with a known WordprocessingML content type, and to specific
+structural elements within them; it does not apply to generic Custom XML parts. It
+assumes those Word elements follow their element-only content model. Raw XML hashing with
+``canonicalize_xml=False`` always preserves the original bytes.
 This is not a semantic Word comparison: equivalent rendering can produce
 different fingerprints. Compare fingerprints with the same policy and API
 algorithm version; the digest is not compatible with arbitrary existing hashes.
+The structural-whitespace change uses fingerprint algorithm version 2, so digest
+strings differ from version 1 even when whitespace handling is disabled.
+
+The optional ``normalize`` callback can replace the bytes hashed for a part::
+
+    from docx import FingerprintItem, FingerprintPolicy, serialize_xml
+    from lxml import etree
+
+    def normalize(item: FingerprintItem, read_bytes):
+        if not item.part_name.endswith(".xml"):
+            return "raw"
+        content = read_bytes()
+        try:
+            return serialize_xml(content, part_name=item.part_name)
+        except etree.XMLSyntaxError:
+            return content
+
+    policy = FingerprintPolicy(normalize=normalize)
+
+The callback receives a part item and an on-demand reader. Return bytes to hash
+those bytes directly, ``"raw"`` to hash the original part incrementally, or
+``None`` to use the default processing. ``read_bytes()`` returns the original
+bytes, can be called repeatedly, and materializes that part in memory only when
+called. Errors propagate. The callback must produce deterministic results.
+Part exclusions run first. For bytes or raw results, the callback is responsible
+for any element-level exclusions; default XML canonicalization and element
+exclusion callbacks are bypassed. When every included part is handled by the
+callback, Content Types need not be read for classification. Otherwise the
+Content Types member is still read to classify parts using default processing.
+
+``serialize_xml()`` is a tree-based helper: it removes blank text using lxml,
+optionally excludes XML elements with the same predicate as ``exclude``, and
+returns serialized bytes. It preserves attribute order, requires memory
+proportional to the XML part, and preserves text following an excluded element
+that remains after lxml's blank-text removal.
+Its blank-text treatment is broader
+than the default structural-whitespace rule; use it only when appropriate.
 
 The default includes document properties, Custom XML, relationships, and binary
 content. ``FingerprintPolicy`` can explicitly exclude:
@@ -138,6 +184,29 @@ content. ``FingerprintPolicy`` can explicitly exclude:
 * ``exclude_relationship_types``: complete relationship Type URIs;
 * ``exclude_xml_tags``: expanded XML names, removing entire subtrees;
 * ``exclude_xml_attributes``: expanded XML attribute names.
+* ``exclude``: a predicate for package parts and XML elements.
+
+The predicate receives a read-only ``FingerprintItem``. Its ``kind`` is ``part``
+or ``xml_element``; ``part_name`` is the package-relative member name. XML
+elements also expose expanded-name ``tag`` and ``attributes``, ``ancestors``
+(root first), and ``parent_tag`` (or ``None`` for a root). For example::
+
+    from docx import FingerprintItem, FingerprintPolicy
+
+    def exclude(item: FingerprintItem) -> bool:
+        if item.kind == "part":
+            return item.part_name.startswith("docProps/")
+        return item.tag == "{urn:example}color" and item.parent_tag == "{urn:example}properties"
+
+    policy = FingerprintPolicy(exclude=exclude)
+
+Returning true excludes the part or the element and its entire subtree; excluded
+subtrees are not visited. Exclusions combine with the other policy settings: any
+matching rule excludes the item. XML element callbacks run only when XML
+canonicalization is enabled. Part callbacks run even with raw XML hashing.
+Content Types are read for default XML classification even when excluded. The
+predicate must be deterministic and equivalent for both fingerprints being
+compared; its exceptions propagate to the caller.
 
 For example, ``exclude_xml_tags=("{namespace-uri}element",)`` applies to that
 element throughout the package. Excluding a member does not automatically
@@ -145,7 +214,7 @@ exclude relationships or Content-Type declarations that reference it.
 Relationship exclusions do not remove their target parts. Applications must
 choose the complete policy appropriate to their comparison.
 
-When XML canonicalization is enabled, ``[Content_Types].xml`` is always read for
+When default XML processing is used, ``[Content_Types].xml`` is read for
 XML classification, even if excluded from the digest. XML parts with nonstandard
 extensions therefore retain the same comparison rules. A malformed or empty
 Content-Types member raises a member-specific ``ValueError`` even when excluded.

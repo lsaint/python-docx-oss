@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Type
 
 from docx.api import Document
-from docx.inspection import FingerprintPolicy, fingerprint, inspect
+from docx.inspection import FingerprintItem, FingerprintPolicy, fingerprint, inspect, serialize_xml
 from docx.transforms import normalize, repair
 
 if TYPE_CHECKING:
@@ -18,7 +18,16 @@ if TYPE_CHECKING:
 __version__ = "0.4.0"
 
 
-__all__ = ["Document", "FingerprintPolicy", "fingerprint", "inspect", "normalize", "repair"]
+__all__ = [
+    "Document",
+    "FingerprintItem",
+    "FingerprintPolicy",
+    "fingerprint",
+    "inspect",
+    "normalize",
+    "repair",
+    "serialize_xml",
+]
 
 
 # -- register custom Part classes with opc package reader --

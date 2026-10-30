@@ -2,6 +2,14 @@
 
 **Unreleased**
 
+- Add a callback to exclude package parts or XML subtrees from fingerprints.
+- Add a per-part normalization callback and a reusable XML tree serializer.
+- Preserve following text when excluding elements with the XML tree serializer.
+- Preserve XML namespace declarations when fingerprinting, including namespace
+  references in attribute values.
+- Ignore formatting whitespace in known Word structural XML elements by default
+  when fingerprinting; preserve text and allow exact structural whitespace comparison.
+
 - Fixed hyperlink field conversion when proofing markers appear in the result.
 - Added streaming story queries with caller-defined predicates and optional early exit.
 - Replaced the fixed hyperlink feature fields with general-purpose scan events.

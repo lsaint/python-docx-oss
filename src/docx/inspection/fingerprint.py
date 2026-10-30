@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from fnmatch import fnmatchcase
+from types import MappingProxyType
+from typing import Any, Literal
 from urllib.parse import unquote
 from zipfile import ZipFile
 
@@ -15,15 +17,95 @@ from docx.inspection.features import MetadataFacts
 from docx.inspection.reader import CT_NS, REL_NS, is_xml, scan_xml
 from docx.inspection.source import PackageSource, open_source
 
+_WORD_NAMESPACES = (
+    "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
+    "http://purl.oclc.org/ooxml/wordprocessingml/main",
+)
+_STRUCTURAL_WORD_TAGS = frozenset(
+    f"{{{namespace}}}{name}"
+    for namespace in _WORD_NAMESPACES
+    for name in (
+        "document",
+        "body",
+        "hdr",
+        "ftr",
+        "footnotes",
+        "footnote",
+        "endnotes",
+        "endnote",
+        "comments",
+        "comment",
+        "p",
+        "pPr",
+        "r",
+        "rPr",
+        "hyperlink",
+        "tbl",
+        "tblPr",
+        "tblGrid",
+        "tr",
+        "trPr",
+        "tc",
+        "tcPr",
+        "sdt",
+        "sdtContent",
+        "sdtPr",
+        "customXml",
+        "smartTag",
+        "styles",
+        "style",
+        "docDefaults",
+        "rPrDefault",
+        "pPrDefault",
+        "latentStyles",
+        "numbering",
+        "abstractNum",
+        "num",
+        "lvl",
+        "settings",
+        "sectPr",
+        "fonts",
+        "font",
+        "tabs",
+        "tblCellMar",
+        "tcBorders",
+        "tcMar",
+        "compat",
+    )
+)
+_XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
+_WORD_CONTENT_TYPE_PREFIXES = (
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.",
+    "application/vnd.ms-word.",
+)
+
+
+@dataclass(frozen=True)
+class FingerprintItem:
+    """A package part or XML element presented to an exclusion predicate."""
+
+    kind: Literal["part", "xml_element"]
+    part_name: str
+    tag: str = ""
+    attributes: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
+    ancestors: tuple[str, ...] = ()
+
+    @property
+    def parent_tag(self) -> str | None:
+        return self.ancestors[-1] if self.ancestors else None
+
 
 @dataclass(frozen=True)
 class FingerprintPolicy:
-    """Explicit exclusions; the default includes every member and all XML content.
+    """Explicit exclusions and XML whitespace policy.
 
     Part patterns match package-relative names using shell-style fnmatch (``*``
     also matches ``/``). XML exclusions use expanded names, e.g. ``{namespace}tag``.
     Relationship exclusions match complete Type URIs. Excluding a part does not
-    implicitly remove its relationships or Content-Type declaration.
+    implicitly remove its relationships or Content-Type declaration. Known Word
+    structural whitespace is ignored by default; set ignore_structural_whitespace
+    to False to retain it. XML normalization, classification and malformed-XML
+    handling can be customized per part with normalize.
     """
 
     exclude_parts: tuple[str, ...] = ()
@@ -31,6 +113,11 @@ class FingerprintPolicy:
     exclude_xml_tags: tuple[str, ...] = ()
     exclude_xml_attributes: tuple[str, ...] = ()
     canonicalize_xml: bool = True
+    ignore_structural_whitespace: bool = True
+    exclude: Callable[[FingerprintItem], bool] | None = None
+    normalize: (
+        Callable[[FingerprintItem, Callable[[], bytes]], bytes | Literal["raw"] | None] | None
+    ) = None
 
     def __post_init__(self) -> None:
         if not self.canonicalize_xml and (
@@ -39,29 +126,123 @@ class FingerprintPolicy:
             raise ValueError("XML exclusions require canonicalize_xml=True")
 
 
+class _ExclusionError(Exception):
+    def __init__(self, error: Exception):
+        self.error = error
+
+
+def serialize_xml(
+    data: bytes,
+    *,
+    part_name: str = "",
+    exclude: Callable[[FingerprintItem], bool] | None = None,
+) -> bytes:
+    """Serialize an XML tree after removing blank text and selected subtrees."""
+    parser = etree.XMLParser(remove_blank_text=True, no_network=True)
+    root = etree.fromstring(data, parser)
+
+    def prune(element: Any, ancestors: tuple[str, ...]) -> bool:
+        tag = element.tag
+        if not isinstance(tag, str):
+            return False
+        if exclude is not None:
+            item = FingerprintItem(
+                "xml_element", part_name, tag, MappingProxyType(dict(element.attrib)), ancestors
+            )
+            if exclude(item):
+                return True
+        for child in list(element):
+            if prune(child, (*ancestors, tag)):
+                if child.tail:
+                    previous = child.getprevious()
+                    if previous is None:
+                        element.text = (element.text or "") + child.tail
+                    else:
+                        previous.tail = (previous.tail or "") + child.tail
+                element.remove(child)
+        return False
+
+    if prune(root, ()):
+        return b""
+    return etree.tostring(root, encoding="UTF-8", method="xml")
+
+
 class _CanonicalXml:
-    def __init__(self, write: Callable[[str], None], policy: FingerprintPolicy):
+    def __init__(
+        self,
+        write: Callable[[str], None],
+        policy: FingerprintPolicy,
+        content_type: str | None,
+        part_name: str,
+    ):
         self._writer = etree.C14NWriterTarget(
             write,
             with_comments=True,
-            exclude_tags=set(policy.exclude_xml_tags),
             exclude_attrs=set(policy.exclude_xml_attributes),
         )
         self._excluded_relationships = policy.exclude_relationship_types
+        self._excluded_tags = set(policy.exclude_xml_tags)
+        self._exclude = policy.exclude
+        self._part_name = part_name
         self._skip_depth = 0
+        self._namespaces = hashlib.sha256()
+        self._pending_namespaces: list[tuple[str, str]] = []
+        self._element_index = 0
+        self._ignore_structural_whitespace = bool(
+            policy.ignore_structural_whitespace
+            and content_type
+            and content_type.startswith(_WORD_CONTENT_TYPE_PREFIXES)
+            and content_type.endswith("+xml")
+        )
+        self._elements: list[tuple[str, bool]] = []
 
     def start_ns(self, prefix: str | None, uri: str) -> None:
-        self._writer.start_ns(prefix or "", uri)
+        if not self._skip_depth:
+            self._pending_namespaces.append((prefix or "", uri))
+            self._writer.start_ns(prefix or "", uri)
 
     def end_ns(self, prefix: str | None) -> None:
         pass
 
     def start(self, tag: str, attrs: Mapping[str, str]) -> None:
-        if self._skip_depth or (
-            tag == f"{{{REL_NS}}}Relationship" and attrs.get("Type") in self._excluded_relationships
-        ):
+        excluded = (
+            self._skip_depth
+            or tag in self._excluded_tags
+            or (
+                tag == f"{{{REL_NS}}}Relationship"
+                and attrs.get("Type") in self._excluded_relationships
+            )
+        )
+        if not excluded and self._exclude is not None:
+            item = FingerprintItem(
+                "xml_element",
+                self._part_name,
+                tag,
+                MappingProxyType(dict(attrs)),
+                tuple(element[0] for element in self._elements),
+            )
+            try:
+                excluded = self._exclude(item)
+            except Exception as exc:
+                raise _ExclusionError(exc) from exc
+        if excluded:
+            self._pending_namespaces.clear()
             self._skip_depth += 1
         else:
+            if self._pending_namespaces:
+                self._namespaces.update(self._element_index.to_bytes(8, "big"))
+                self._namespaces.update(len(self._pending_namespaces).to_bytes(8, "big"))
+                for prefix, uri in sorted(self._pending_namespaces):
+                    for value in (prefix, uri):
+                        encoded = value.encode("utf-8")
+                        self._namespaces.update(len(encoded).to_bytes(8, "big"))
+                        self._namespaces.update(encoded)
+                self._pending_namespaces.clear()
+            self._element_index += 1
+            inherited = self._elements[-1][1] if self._elements else False
+            space = attrs.get(_XML_SPACE)
+            preserve = True if space == "preserve" else False if space == "default" else inherited
+            self._elements.append((tag, preserve))
             self._writer.start(tag, dict(attrs))
 
     def end(self, tag: str) -> None:
@@ -69,10 +250,20 @@ class _CanonicalXml:
             self._skip_depth -= 1
         else:
             self._writer.end(tag)
+            self._elements.pop()
 
     def data(self, text: str) -> None:
-        if not self._skip_depth:
-            self._writer.data(text)
+        if self._skip_depth:
+            return
+        if (
+            self._ignore_structural_whitespace
+            and self._elements
+            and self._elements[-1][0] in _STRUCTURAL_WORD_TAGS
+            and not self._elements[-1][1]
+            and not text.strip(" \t\r\n")
+        ):
+            return
+        self._writer.data(text)
 
     def comment(self, text: str) -> None:
         if not self._skip_depth:
@@ -87,6 +278,9 @@ class _CanonicalXml:
 
     def close(self) -> None:
         self._writer.close()
+
+    def namespace_digest(self) -> bytes:
+        return self._namespaces.digest()
 
 
 def _xml_types(package: ZipFile) -> tuple[dict[str, str], dict[str, str]]:
@@ -110,9 +304,10 @@ def _xml_types(package: ZipFile) -> tuple[dict[str, str], dict[str, str]]:
 def fingerprint(source: PackageSource, *, policy: FingerprintPolicy | None = None) -> str:
     """Return a SHA-256 content fingerprint, ignoring ZIP order and ZIP metadata.
 
-    XML uses C14N 2.0 with comments, preserving text whitespace and namespace
-    prefixes. This is a package-content comparison, not a semantic Word diff.
-    Malformed XML and ambiguous duplicate names raise; no partial hash is returned.
+    By default, XML uses C14N 2.0 with comments and ignores whitespace-only text in
+    known Word structural elements unless xml:space preserves it. Other text and
+    namespaces are preserved. This is not a semantic Word diff.
+    Malformed XML raises by default; ambiguous duplicate names always raise.
     Stream ownership and position guarantees match inspect().
     """
     policy = FingerprintPolicy() if policy is None else policy
@@ -120,29 +315,76 @@ def fingerprint(source: PackageSource, *, policy: FingerprintPolicy | None = Non
         members = [member for member in package.infolist() if not member.is_dir()]
         if len({member.filename for member in members}) != len(members):
             raise ValueError("Cannot fingerprint a package with duplicate member names")
-        defaults, overrides = _xml_types(package) if policy.canonicalize_xml else ({}, {})
-        digest = hashlib.sha256(b"python-docx-oss package fingerprint v1\0")
+        xml_types: tuple[dict[str, str], dict[str, str]] | None = (
+            _xml_types(package) if policy.canonicalize_xml and policy.normalize is None else None
+        )
+        digest = hashlib.sha256(b"python-docx-oss package fingerprint v2\0")
         for member in sorted(members, key=lambda member: member.filename):
             name = member.filename
-            if any(fnmatchcase(name, pattern) for pattern in policy.exclude_parts):
+            if any(fnmatchcase(name, pattern) for pattern in policy.exclude_parts) or (
+                policy.exclude is not None and policy.exclude(FingerprintItem("part", name))
+            ):
                 continue
             part_digest = hashlib.sha256()
-            content_type = overrides.get(name) or defaults.get(name.rsplit(".", 1)[-1].lower())
             with package.open(member) as content:
-                if policy.canonicalize_xml and is_xml(name, content_type):
+                cached: bytes | None = None
+
+                def read_bytes() -> bytes:
+                    nonlocal cached
+                    if cached is None:
+                        cached = content.read()
+                    return cached
+
+                normalized = (
+                    policy.normalize(FingerprintItem("part", name), read_bytes)
+                    if policy.normalize is not None
+                    else None
+                )
+                if (
+                    normalized is not None
+                    and not isinstance(normalized, bytes)
+                    and normalized != "raw"
+                ):
+                    raise TypeError("normalize must return bytes, 'raw', or None")
+                if isinstance(normalized, bytes):
+                    part_digest.update(normalized)
+                else:
+                    if cached is not None:
+                        content.seek(0)
+                if normalized == "raw" or (normalized is None and not policy.canonicalize_xml):
+                    while chunk := content.read(64 * 1024):
+                        part_digest.update(chunk)
+                elif normalized is None:
+                    if xml_types is None:
+                        xml_types = _xml_types(package)
+                    defaults, overrides = xml_types
+                    content_type = overrides.get(name) or defaults.get(
+                        name.rsplit(".", 1)[-1].lower()
+                    )
+                    if not is_xml(name, content_type):
+                        while chunk := content.read(64 * 1024):
+                            part_digest.update(chunk)
+                        encoded_name = name.encode("utf-8")
+                        digest.update(len(encoded_name).to_bytes(8, "big"))
+                        digest.update(encoded_name)
+                        digest.update(part_digest.digest())
+                        continue
                     target = _CanonicalXml(
-                        lambda text: part_digest.update(text.encode("utf-8")), policy
+                        lambda text: part_digest.update(text.encode("utf-8")),
+                        policy,
+                        content_type,
+                        name,
                     )
                     parser = etree.XMLParser(target=target, resolve_entities=False, no_network=True)
                     try:
                         while chunk := content.read(64 * 1024):
                             parser.feed(chunk)
                         parser.close()
+                        part_digest.update(target.namespace_digest())
+                    except _ExclusionError as exc:
+                        raise exc.error from exc
                     except (etree.XMLSyntaxError, ValueError) as exc:
                         raise ValueError(f"Cannot fingerprint XML part {name!r}: {exc}") from exc
-                else:
-                    while chunk := content.read(64 * 1024):
-                        part_digest.update(chunk)
             encoded_name = name.encode("utf-8")
             digest.update(len(encoded_name).to_bytes(8, "big"))
             digest.update(encoded_name)
