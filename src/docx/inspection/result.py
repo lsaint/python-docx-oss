@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -41,16 +42,12 @@ class PackageInventory:
 
 
 @dataclass(frozen=True)
-class Features:
-    field_hyperlink: bool = False
-    split_hyperlink_runs: bool = False
-
-
-@dataclass(frozen=True)
 class PackageInspection:
     inventory: PackageInventory = PackageInventory()
     findings: tuple[Finding, ...] = ()
-    features: Features = Features()
+    matched: bool = False
+    scan_complete: bool = True
+    scope: Literal["full", "query"] = "full"
 
     def has_finding(self, code: str) -> bool:
         return any(finding.code == code for finding in self.findings)

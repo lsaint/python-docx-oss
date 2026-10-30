@@ -3,6 +3,8 @@
 **Unreleased**
 
 - Fixed hyperlink field conversion when proofing markers appear in the result.
+- Added streaming story queries with caller-defined predicates and optional early exit.
+- Replaced the fixed hyperlink feature fields with general-purpose scan events.
 
 **0.4.0 (2026-10-29)**
 

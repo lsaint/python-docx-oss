@@ -159,10 +159,16 @@ class DescribeHyperlinkFieldConversion:
             "<w:r><w:t>label</w:t></w:r></w:fldSimple></w:p>"
         )
         content = package(document_parts(body))
-        assert inspect(content).features.field_hyperlink
+        assert inspect(
+            content,
+            predicate=lambda event: event.kind == "start" and event.tag.endswith("}fldSimple"),
+        ).matched
         result = normalize(content, hyperlink_fields=True)
         assert result.report.changed
-        assert not inspect(result.content).features.field_hyperlink
+        assert not inspect(
+            result.content,
+            predicate=lambda event: event.kind == "start" and event.tag.endswith("}fldSimple"),
+        ).matched
 
     @pytest.mark.parametrize(
         ("instruction", "expected"),

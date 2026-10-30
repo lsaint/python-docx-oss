@@ -6,14 +6,15 @@ import io
 import tracemalloc
 from dataclasses import FrozenInstanceError
 from pathlib import Path
-from typing import Any, BinaryIO, Literal
+from typing import Any, BinaryIO, Literal, cast
 from zipfile import ZipFile
 
 import pytest
 
 from docx import inspect
+from docx.inspection import ScanEvent
 
-from .helpers import RT, members, package, relationships, story
+from .helpers import members, package, relationships, story
 
 
 class DescribeInspection:
@@ -99,7 +100,7 @@ class DescribeInspection:
         assert not stream.closed
         assert stream.getvalue() == path.read_bytes() == content
         with pytest.raises(FrozenInstanceError):
-            inspect(content).features.field_hyperlink = True  # type: ignore[misc]
+            inspect(content).matched = True  # type: ignore[misc]
 
     def it_restores_streams_on_failure(self):
         stream = io.BytesIO(b"bad package")
@@ -219,142 +220,124 @@ class DescribeInspection:
         assert report.findings_by_code("unreadable_part")[0].partname == "word/document.xml"
 
 
-class DescribeStoryFeatures:
-    @pytest.mark.parametrize(
-        ("instruction", "expected"),
-        [
-            ('HYPERLINK "https://example.test"', True),
-            (' hyperlink "https://example.test"', True),
-            ("REF HYPERLINK_ref", False),
-            ("TOC HYPERLINK", False),
-            ("HYPERLINK_ref", False),
-        ],
-    )
-    @pytest.mark.parametrize("strict", [False, True])
-    def it_detects_simple_fields_by_the_first_instruction_token(
-        self,
-        instruction: str,
-        expected: bool,
-        strict: bool,
-    ):
-        escaped = instruction.replace('"', "&quot;")
-        parts = members(f'<w:p><w:fldSimple w:instr="{escaped}"><w:r/></w:fldSimple></w:p>')
-        if strict:
-            parts["word/document.xml"] = parts["word/document.xml"].replace(
-                b"http://schemas.openxmlformats.org/wordprocessingml/2006/main",
-                b"http://purl.oclc.org/ooxml/wordprocessingml/main",
-            )
-        assert inspect(package(parts)).features.field_hyperlink is expected
+class DescribeCustomStoryQueries:
+    def it_stops_on_a_match_and_does_not_claim_complete_validation(self):
+        parts = members("<w:p><w:r><w:t>first</w:t></w:r></w:p>")
+        parts["word/styles.xml"] = b"<broken>"
+        content = package(parts)
+        events: list[ScanEvent] = []
 
-    @pytest.mark.parametrize(
-        ("first", "second", "expected"),
-        [
-            ("HYPER", 'LINK "https://example.test"', True),
-            ("HYPERLINK", "_ref", False),
-            ("REF ", "HYPERLINK_ref", False),
-            ("TOC ", "HYPERLINK", False),
-            ("HYPERLINK", "", True),
-        ],
-    )
-    def it_matches_only_the_first_token_across_instruction_runs(
-        self,
-        first: str,
-        second: str,
-        expected: bool,
-    ):
-        body = (
-            '<w:p><w:r><w:fldChar w:fldCharType="begin"/></w:r>'
-            f"<w:r><w:instrText>{first}</w:instrText></w:r>"
-            f"<w:r><w:instrText>{second}</w:instrText></w:r>"
-            '<w:r><w:fldChar w:fldCharType="separate"/></w:r>'
-            '<w:r><w:t>label</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>'
-        )
-        assert inspect(package(members(body))).features.field_hyperlink is expected
+        def predicate(event: ScanEvent) -> bool:
+            events.append(event)
+            return event.kind == "start" and event.tag.endswith("}t")
 
-    @pytest.mark.parametrize(
-        ("body", "field", "split"),
-        [
-            (
-                '<w:p><w:r><w:instrText> HYPERLINK "https://example.test" '
-                "</w:instrText></w:r></w:p>",
-                True,
-                False,
-            ),
-            ("<w:p><w:hyperlink><w:r/><w:r/></w:hyperlink></w:p>", False, True),
-            (
-                "<w:p><w:r><w:instrText>HYPER</w:instrText></w:r>"
-                '<w:r><w:instrText>LINK "https://example.test"</w:instrText></w:r></w:p>',
-                True,
-                False,
-            ),
-            ("<w:p><w:r><w:instrText>TOC REF _Ref</w:instrText></w:r></w:p>", False, False),
-            (
-                "<w:p><w:r><w:instrText>HYPER</w:instrText></w:r></w:p>"
-                "<w:p><w:r><w:instrText>LINK</w:instrText></w:r></w:p>",
-                False,
-                False,
-            ),
-            (
-                '<w:p><w:r><w:instrText>HYPER</w:instrText><w:fldChar w:fldCharType="end"/>'
-                '<w:fldChar w:fldCharType="begin"/><w:instrText>LINK</w:instrText></w:r></w:p>',
-                False,
-                False,
-            ),
-            ("<w:p><w:hyperlink><w:r/></w:hyperlink><w:r/></w:p>", False, False),
-        ],
-    )
-    def it_scans_hyperlink_shapes(self, body: str, field: bool, split: bool):
-        report = inspect(package(members(body)))
-        assert not report.findings
-        assert report.features.field_hyperlink is field
-        assert report.features.split_hyperlink_runs is split
+        result = inspect(content, predicate=predicate, stop_on_match=True)
+        assert result.scope == "query"
+        assert result.matched
+        assert not result.scan_complete
+        assert not result.inventory.parts
+        assert not result.findings
+        assert events[-1].tag.endswith("}t")
+        assert inspect(content).has_finding("unparseable_xml_part")
 
-    @pytest.mark.parametrize("kind", ["header", "footer", "footnotes", "endnotes"])
-    def it_scans_related_story_parts_at_nonstandard_paths(self, kind: str):
-        parts = members()
+    def it_scans_all_stories_and_preserves_readonly_event_attributes(self):
+        parts = members("<w:p><w:r><w:t>body</w:t></w:r></w:p>")
         parts["word/_rels/document.xml.rels"] = relationships(
-            ("story", kind, "../stories/part.xml", False),
+            ("header", "header", "header1.xml", False)
         )
-        parts["stories/part.xml"] = story("<w:p><w:hyperlink><w:r/><w:r/></w:hyperlink></w:p>")
-        assert inspect(package(parts)).features.split_hyperlink_runs
+        parts["word/header1.xml"] = story("<w:p><w:r><w:t>header</w:t></w:r></w:p>")
+        seen: list[tuple[str, str]] = []
 
-    def it_does_not_treat_configuration_or_unreachable_xml_as_story_content(self):
+        def predicate(event: ScanEvent) -> bool:
+            if event.kind == "text" and event.tag.endswith("}t"):
+                seen.append((event.partname, event.text))
+            return event.text == "body"
+
+        report = inspect(package(parts), predicate=predicate)
+        assert report.matched
+        assert report.scan_complete
+        assert ("word/header1.xml", "header") in seen
+        assert report.scope == "query"
+        assert not report.inventory.parts
+
+    def it_reports_errors_in_a_scanned_story_and_marks_scan_incomplete(self):
         parts = members()
-        parts["word/styles.xml"] = story("<w:instrText>HYPERLINK</w:instrText>")
-        parts["word/_rels/document.xml.rels"] = relationships(
-            ("styles", "styles", "styles.xml", False),
-        )
-        assert not inspect(package(parts)).features.field_hyperlink
+        parts["word/document.xml"] = b"<broken>"
+        report = inspect(package(parts), predicate=lambda event: False)
+        assert report.has_finding("unparseable_xml_part")
+        assert not report.scan_complete
 
-    def it_supports_strict_word_namespaces(self):
-        parts = members("<w:p><w:hyperlink><w:r/><w:r/></w:hyperlink></w:p>")
-        parts["word/document.xml"] = parts["word/document.xml"].replace(
-            b"http://schemas.openxmlformats.org/wordprocessingml/2006/main",
-            b"http://purl.oclc.org/ooxml/wordprocessingml/main",
+    def it_retains_a_match_if_later_xml_is_malformed(self):
+        parts = members()
+        parts["word/document.xml"] = story("<w:p><w:r><w:t>match</w:t></w:r></w:p>")[:-20]
+        report = inspect(
+            package(parts), predicate=lambda event: event.kind == "text" and event.text == "match"
         )
-        parts["_rels/.rels"] = parts["_rels/.rels"].replace(
-            RT.encode(),
-            b"http://purl.oclc.org/ooxml/officeDocument/relationships/",
-        )
-        assert inspect(package(parts)).features.split_hyperlink_runs
+        assert report.matched
+        assert report.has_finding("unparseable_xml_part")
+        assert not report.scan_complete
 
-    def it_keeps_python_memory_bounded_as_story_xml_grows(self):
-        def peak(paragraphs: int) -> int:
-            parts = members()
-            parts["word/document.xml"] = story("<w:p><w:r><w:t>text</w:t></w:r></w:p>" * paragraphs)
-            content = package(parts, compressed=True)
-            tracemalloc.start()
-            try:
-                report = inspect(content)
-                _, memory = tracemalloc.get_traced_memory()
-            finally:
-                tracemalloc.stop()
-            assert not report.findings
-            return memory
+    def it_restores_stream_position_and_never_closes_the_borrowed_stream(self):
+        content = package(members())
+        stream = io.BytesIO(content)
+        stream.seek(13)
+        assert inspect(stream, predicate=lambda event: False).scan_complete
+        assert stream.tell() == 13
+        assert stream.getvalue() == content
+        assert not stream.closed
 
-        small = peak(1000)
-        large = peak(100000)
-        assert large < small + 1024 * 1024
+    def it_propagates_predicate_errors_and_restores_the_stream(self):
+        stream = io.BytesIO(package(members()))
+        stream.seek(7)
+
+        def fail(event: ScanEvent) -> bool:
+            raise ValueError("predicate failed")
+
+        with pytest.raises(ValueError, match="predicate failed"):
+            inspect(stream, predicate=fail)
+        assert stream.tell() == 7
+        assert not stream.closed
+
+    def it_exposes_immutable_attributes_to_the_predicate(self):
+        def modify(event: ScanEvent) -> bool:
+            if event.kind == "start":
+                cast(Any, event.attributes)["changed"] = "value"
+            return False
+
+        with pytest.raises(TypeError):
+            inspect(package(members()), predicate=modify)
+
+    def it_rejects_stop_without_a_predicate(self):
+        with pytest.raises(ValueError, match="requires a predicate"):
+            inspect(package(members()), stop_on_match=True)
+
+    def it_does_not_open_unrelated_xml_or_media(self, monkeypatch: pytest.MonkeyPatch):
+        parts = members()
+        parts["word/styles.xml"] = b"<styles/>"
+        parts["word/media/image.bin"] = b"binary"
+        content = package(parts)
+        original = ZipFile.open
+
+        def guarded_open(self: ZipFile, name: Any, *args: Any, **kwargs: Any) -> Any:
+            member_name = name if isinstance(name, str) else name.filename
+            assert member_name not in {"word/styles.xml", "word/media/image.bin"}
+            return original(self, name, *args, **kwargs)
+
+        monkeypatch.setattr(ZipFile, "open", guarded_open)
+        assert not inspect(content, predicate=lambda event: False).findings
+
+    def it_keeps_memory_bounded_for_large_stories(self):
+        parts = members()
+        parts["word/document.xml"] = story("<w:p><w:r><w:t>text</w:t></w:r></w:p>" * 100000)
+        content = package(parts, compressed=True)
+        tracemalloc.start()
+        try:
+            report = inspect(content, predicate=lambda event: False)
+            _, memory = tracemalloc.get_traced_memory()
+        finally:
+            tracemalloc.stop()
+        assert report.scan_complete
+        assert memory < 2 * 1024 * 1024
 
 
 class DescribeRealWordInspection:

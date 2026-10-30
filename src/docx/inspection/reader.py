@@ -10,9 +10,8 @@ from zipfile import BadZipFile, ZipFile, ZipInfo
 
 from lxml import etree
 
-from docx.inspection.features import MetadataFacts, XmlFacts
+from docx.inspection.features import MetadataFacts, Predicate, PredicateError, StopScan, XmlFacts
 from docx.inspection.result import (
-    Features,
     Finding,
     PackageInspection,
     PackageInventory,
@@ -63,7 +62,7 @@ def resolve_target(source: str, target: str) -> str:
     return posixpath.normpath(posixpath.join(directory, path))
 
 
-def scan_xml(package: ZipFile, member: ZipInfo, target: XmlFacts) -> Features:
+def scan_xml(package: ZipFile, member: ZipInfo, target: XmlFacts) -> bool:
     parser = etree.XMLParser(target=target, resolve_entities=False, no_network=True)
     nonblank = False
     with package.open(member) as stream:
@@ -105,11 +104,11 @@ class _Inspection:
             if name.startswith("/") or "\\" in name or ".." in name.split("/"):
                 self.findings.append(Finding("unsafe_member_name", name))
 
-    def _scan(self, name: str, target: XmlFacts) -> Features:
+    def _scan(self, name: str, target: XmlFacts) -> bool:
         member = self.members[name]
         if member.file_size == 0:
             self.findings.append(Finding("empty_xml_part", name))
-            return Features()
+            return False
         try:
             return scan_xml(self.package, member, target)
         except EmptyXmlError:
@@ -118,7 +117,7 @@ class _Inspection:
             self.findings.append(Finding("unparseable_xml_part", name, str(exc)))
         except PACKAGE_ERRORS as exc:
             self.findings.append(Finding("unreadable_part", name, str(exc)))
-        return Features()
+        return target.matched
 
     def _read_metadata(self) -> None:
         if "[Content_Types].xml" not in self.members:
@@ -188,7 +187,9 @@ class _Inspection:
     def content_type(self, name: str) -> str | None:
         return self.overrides.get(name) or self.defaults.get(name.rsplit(".", 1)[-1].lower())
 
-    def report(self) -> PackageInspection:
+    def report(
+        self, *, predicate: Predicate | None = None, stop_on_match: bool = False
+    ) -> PackageInspection:
         self._read_metadata()
         reachable = self._reachable()
         main_parts = {
@@ -208,38 +209,66 @@ class _Inspection:
             and relationship_kind(rel.relationship_type) in STORIES
             and not rel.external
         }
-        features = Features()
+        matched = False
+        scan_complete = True
         for name in sorted(self.members):
             if name == "[Content_Types].xml" or relationship_source(name) is not None:
                 continue
-            if not is_xml(name, self.content_type(name)):
+            if predicate is not None and name not in story_parts:
                 continue
-            observed = self._scan(name, XmlFacts(name in story_parts))
-            features = Features(
-                features.field_hyperlink or observed.field_hyperlink,
-                features.split_hyperlink_runs or observed.split_hyperlink_runs,
+            if not is_xml(name, self.content_type(name)) and not (
+                predicate is not None and name in story_parts
+            ):
+                continue
+            try:
+                matched |= self._scan(name, XmlFacts(name, predicate, stop_on_match))
+            except StopScan:
+                matched = True
+                scan_complete = False
+                break
+        inventory = PackageInventory()
+        if predicate is None:
+            inventory = PackageInventory(
+                tuple(
+                    PartInventory(
+                        name, member.file_size, self.content_type(name), name in reachable
+                    )
+                    for name, member in sorted(self.members.items())
+                ),
+                tuple(self.relationships),
             )
-        inventory = PackageInventory(
-            tuple(
-                PartInventory(name, member.file_size, self.content_type(name), name in reachable)
-                for name, member in sorted(self.members.items())
-            ),
-            tuple(self.relationships),
+        return PackageInspection(
+            inventory,
+            tuple(self.findings),
+            matched,
+            scan_complete and not self.findings,
+            "query" if predicate is not None else "full",
         )
-        return PackageInspection(inventory, tuple(self.findings), features)
 
 
-def inspect(source: PackageSource) -> PackageInspection:
+def inspect(
+    source: PackageSource, *, predicate: Predicate | None = None, stop_on_match: bool = False
+) -> PackageInspection:
     """Observe package structure and Word story features without constructing a Document.
 
     Format failures become findings. Source opening failures propagate, and invalid
     argument types raise TypeError.
     Seekable streams are read from the beginning and restored; borrowed streams stay open.
     Binary members are inventoried without reading their payloads.
+    A predicate scans reachable Word story parts and receives read-only XML events.
+    stop_on_match ends the query at the first match; callback errors propagate.
     """
+    if stop_on_match and predicate is None:
+        raise ValueError("stop_on_match requires a predicate")
     with open_source(source) as stream:
         try:
             with ZipFile(stream) as package:
-                return _Inspection(package).report()
+                return _Inspection(package).report(predicate=predicate, stop_on_match=stop_on_match)
+        except PredicateError as exc:
+            raise exc.error from exc
         except PACKAGE_ERRORS as exc:
-            return PackageInspection(findings=(Finding("not_a_package", message=str(exc)),))
+            return PackageInspection(
+                findings=(Finding("not_a_package", message=str(exc)),),
+                scan_complete=False,
+                scope="query" if predicate is not None else "full",
+            )

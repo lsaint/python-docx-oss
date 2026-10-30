@@ -13,18 +13,32 @@ filesystem path (including ``pathlib.Path``), raw bytes, or a binary stream::
     for finding in report.findings:
         print(finding.code, finding.partname, finding.target)
 
-    if report.features.field_hyperlink or report.features.split_hyperlink_runs:
-        print("Hyperlink shapes requiring application review were found")
+The report contains an immutable package inventory and structured findings.
 
-The report consists of three immutable values:
+To search Word story XML, provide a predicate that receives read-only events::
 
-* ``inventory.parts`` lists ZIP members, uncompressed sizes, Content-Types, and
-  whether each member is reachable from package relationships.
-* ``inventory.relationships`` lists source names, IDs, Type URIs, resolved
-  internal targets, and external URIs. External targets are never fetched.
-* ``findings`` identifies damaged or suspicious structures. ``features`` records
-  Word story facts; it does not decide whether an application should normalize
-  or reject a document.
+    def find_bookmark(event):
+        return event.kind == "start" and event.tag.endswith("}bookmarkStart")
+
+    report = inspect("input.docx", predicate=find_bookmark, stop_on_match=True)
+    if report.findings:
+        print("The scanned package is damaged")
+    elif report.matched:
+        print("Bookmark found")
+
+A predicate selects query scope: the main document and reachable headers,
+footers, footnotes, endnotes, and comments. Query reports have empty inventory
+and ``scope == "query"``. Without a predicate, inspection retains full scope
+and inventory. The predicate runs on immutable ``ScanEvent`` objects with
+``partname``, ``kind`` (start/end/text), expanded ``tag``, ``attributes`` on
+start events, and ``text`` on text events. Text may be delivered in multiple
+chunks. A stateful callable may track element nesting and split text.
+
+The default scans the full query scope even after a match; ``stop_on_match=True``
+stops at the first match and sets ``scan_complete=False``. Findings report only
+scanned content; neither an early match nor a query with no findings proves the
+whole package is valid. Predicate exceptions propagate. The source stream is
+never handed to the predicate.
 
 Names are package-relative without a leading slash. The relationship source
 ``/`` denotes the package root. Internal target paths are resolved relative to
@@ -79,14 +93,8 @@ than being classified as package damage. This matches ``repair()`` and ``normali
 Story scanning and resource use
 --------------------------------------
 
-``field_hyperlink`` detects a first instruction token of ``HYPERLINK``, including
-simple fields (``w:fldSimple/@w:instr``) and complex field instructions split across
-runs. Other commands containing the word, such as ``REF HYPERLINK_ref``, do not
-match. ``split_hyperlink_runs`` detects ``w:hyperlink``
-elements with more than one direct ``w:r`` child. The scanner covers the main
-document and reachable header, footer, footnote, endnote, and comment story parts;
-configuration XML such as styles and settings does not contribute features.
-Transitional and Strict Word namespaces are supported.
+The query scans all reachable Word story parts, including Transitional and Strict
+Word namespaces. No built-in hyperlink-specific feature is assumed.
 
 Inspection reads XML incrementally without building an element tree. Media,
 embedded objects, and other binary member payloads are never opened. Memory use
