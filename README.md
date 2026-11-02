@@ -22,7 +22,7 @@ Packaging Convention (OPC) workflows.
 
 Use it when an application needs more than basic paragraphs and tables: custom document
 metadata, application-owned XML, vector images, floating pictures, East Asian fonts,
-or low-level package and relationship access.
+package inspection, configurable fingerprints, repair, or low-level package and relationship access.
 
 ## Capability Matrix
 
@@ -36,10 +36,10 @@ or low-level package and relationship access.
 | Latin and East Asian font controls | Stable | `run.font.name`, `run.font.hAnsi`, `run.font.eastAsia` |
 | Low-level OPC parts and relationships | Stable | `document.part.package`, `part.rels` |
 | In-memory read, export, and independent copies | Stable | `Document()`, `to_bytes()`, `copy()` |
-| Document sanitization | Development | `document.sanitize()` |
-| Read-only package inspection and story feature scanning | Development | `inspect()` |
-| Configurable package-content fingerprints | Development | `fingerprint()`, `FingerprintPolicy` |
-| Explicit empty Custom XML repair and hyperlink normalization | Development | `repair()`, `normalize()` |
+| Document sanitization | Stable | `document.sanitize()` |
+| Read-only package inspection and streaming feature scanning | Stable | `inspect()`, `ScanEvent` |
+| Configurable package-content fingerprints | Stable | `fingerprint()`, `FingerprintPolicy`, `serialize_xml` |
+| Explicit empty Custom XML repair and hyperlink normalization | Stable | `repair()`, `normalize()` |
 | Package and semantic diff | Planned | — |
 
 ## Installation
@@ -92,22 +92,42 @@ document.save("output.docx")
 
 ### Package inspection and fingerprints
 
-Inspect damaged documents before opening them, without loading media payloads:
+Inspect damaged documents before opening them, stream story elements with caller predicates,
+and compute reproducible content fingerprints without loading media payloads:
 
 ```python
-from docx import FingerprintPolicy, fingerprint, inspect
+from docx import FingerprintItem, FingerprintPolicy, fingerprint, inspect
 
+# 1. Structural inspection and finding detection
 report = inspect("input.docx")
 for finding in report.findings:
     print(finding.code, finding.partname)
 
-digest = fingerprint("input.docx", policy=FingerprintPolicy(exclude_parts=("docProps/*",)))
+# 2. Streaming story query with early exit
+def find_bookmark(event):
+    return event.kind == "start" and event.tag.endswith("}bookmarkStart")
+
+query = inspect("input.docx", predicate=find_bookmark, stop_on_match=True)
+if query.matched:
+    print("Found bookmark; scan complete:", query.scan_complete)
+
+# 3. Content fingerprints with part and native XML exclusions
+def exclude_item(item: FingerprintItem) -> bool:
+    if item.kind == "part":
+        return item.part_name.startswith("docProps/")
+    return item.tag == "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}bookmarkStart"
+
+policy = FingerprintPolicy(exclude=exclude_item)
+digest = fingerprint("input.docx", policy=policy)
 ```
 
-These APIs leave inputs unchanged and restore seekable stream positions. Fingerprints
-ignore ZIP metadata and member ordering; all content is included unless explicitly
-excluded. See [Package inspection and fingerprints](docs/user/inspection.rst) for
-finding codes, XML comparison semantics, and policy rules.
+These APIs leave inputs unchanged and restore seekable stream positions. `inspect()` can
+inventory package members, detect structural damage, or stream story XML elements using
+caller-defined predicates without loading media payloads. Fingerprints ignore ZIP metadata
+and member ordering, ignore indentation in schema-derived Word and DrawingML structures
+via C14N 2.0 (fingerprint v3), and support selective part and XML element exclusions.
+See [Package inspection and fingerprints](docs/user/inspection.rst) for finding codes,
+XML comparison semantics, and policy rules.
 
 ### Explicit repair and normalization
 
@@ -116,13 +136,19 @@ from docx import normalize, repair
 
 repaired = repair(source_bytes, empty_custom_xml=True)
 if repaired.report.succeeded:
-    normalized = normalize(repaired.content, hyperlink_fields=True, hyperlink_runs=True)
+    normalized = normalize(
+        repaired.content,
+        hyperlink_fields=True,
+        hyperlink_runs=True,
+    )
     if normalized.report.succeeded:
         output_bytes = normalized.content
 ```
 
-Operations are disabled by default. Results include committed changes, skipped cases,
-and errors; validation failures return the original bytes. See
+Operations are disabled by default and transactional: validation failures return the
+original bytes. Hyperlink normalization safely converts simple or complex fields while
+isolating text box boundaries, preserving proofing markers, and supporting caller
+selection callbacks (`select_hyperlink`). See
 [Repair and normalization](docs/user/transformations.rst) for supported structures,
 selection callbacks, and preservation rules.
 
@@ -187,6 +213,9 @@ available through `Document.add_float_picture()` and `Run.add_float_picture()`.
 - [API reference](docs/index.rst#api-documentation)
 - [Custom properties](docs/user/custom-properties.rst)
 - [Custom XML](docs/user/custom-xml.rst)
+- [Package inspection and fingerprints](docs/user/inspection.rst)
+- [Package repair and normalization](docs/user/transformations.rst)
+- [Package sanitization](docs/user/sanitization.rst)
 - [python-docx compatibility](docs/user/compatibility.rst)
 - [Upstream maintenance](docs/dev/upstream-maintenance.rst)
 - [Release history](HISTORY.md)
@@ -203,15 +232,17 @@ For local development:
 ```bash
 uv sync
 uv run pytest
-uv run ruff check .
-uv run pyright
+uv run behave
+uv run ruff check tests/integration tests/fixtures/customxml/generate_fixture.py
+uv run pyright tests/integration tests/fixtures/customxml/generate_fixture.py
 ```
 
 ## Project Status
 
-The current focus is stabilizing the independent SDK baseline, its in-memory workflows,
-sanitization, and read-only package analysis before expanding document comparison,
-composition, and validation APIs.
+With version 0.5.0, the independent SDK baseline, in-memory workflows, package
+sanitization, streaming inspection, content fingerprinting (v3), and explicit package
+repairs are stabilized. Upcoming milestones focus on package and semantic diffing,
+composition, and schema-guided validation.
 
 ## Credits
 
