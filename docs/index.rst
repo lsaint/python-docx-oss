@@ -21,10 +21,13 @@ supports capabilities needed by more demanding document workflows:
 * floating images with position and text wrapping;
 * SVG and EMF vector images;
 * separate Latin and East Asian font settings;
-* document custom properties; and
-* multiple Custom XML parts that survive a load/save round trip; and
+* document custom properties;
+* multiple Custom XML parts that survive a load/save round trip;
 * explicit package-level sanitization of metadata, comments, web extensions,
-  and formatting revision history.
+  and formatting revision history;
+* read-only package inspection and streaming story scanning;
+* configurable package-content fingerprints with structural whitespace normalization; and
+* transactional empty Custom XML repair and hyperlink normalization.
 
 Here is a small example:
 

@@ -4,8 +4,9 @@ Package inspection and fingerprinting
 ============================================
 
 .. automodule:: docx.inspection
-   :members: inspect, fingerprint, FingerprintPolicy, PackageInspection,
-             PackageInventory, PartInventory, RelationshipInventory, Finding, ScanEvent
+   :members: inspect, fingerprint, FingerprintPolicy, FingerprintItem, serialize_xml,
+             PackageInspection, PackageInventory, PartInventory, RelationshipInventory,
+             Finding, ScanEvent
 
 See :ref:`package_inspection` for finding codes, exclusions, scan scope, and
 resource guarantees.
