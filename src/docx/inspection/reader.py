@@ -89,6 +89,7 @@ class _Inspection:
     def __init__(self, package: ZipFile):
         self.package = package
         self.findings: list[Finding] = []
+        self.scan_complete = True
         self.members: dict[str, ZipInfo] = {}
         self.defaults: dict[str, str] = {}
         self.overrides: dict[str, str] = {}
@@ -99,6 +100,7 @@ class _Inspection:
                 continue
             if name in self.members:
                 self.findings.append(Finding("duplicate_member", name))
+                self.scan_complete = False
             else:
                 self.members[name] = member
             if name.startswith("/") or "\\" in name or ".." in name.split("/"):
@@ -108,25 +110,31 @@ class _Inspection:
         member = self.members[name]
         if member.file_size == 0:
             self.findings.append(Finding("empty_xml_part", name))
+            self.scan_complete = False
             return False
         try:
             return scan_xml(self.package, member, target)
         except EmptyXmlError:
             self.findings.append(Finding("empty_xml_part", name))
+            self.scan_complete = False
         except (etree.XMLSyntaxError, ValueError) as exc:
             self.findings.append(Finding("unparseable_xml_part", name, str(exc)))
+            self.scan_complete = False
         except PACKAGE_ERRORS as exc:
             self.findings.append(Finding("unreadable_part", name, str(exc)))
+            self.scan_complete = False
         return target.matched
 
     def _read_metadata(self) -> None:
         if "[Content_Types].xml" not in self.members:
             self.findings.append(Finding("missing_content_types"))
+            self.scan_complete = False
         else:
             target = MetadataFacts()
             self._scan("[Content_Types].xml", target)
             if target.root_tag != f"{{{CT_NS}}}Types":
                 self.findings.append(Finding("invalid_content_types", "[Content_Types].xml"))
+                self.scan_complete = False
             for tag, attrs in target.elements:
                 if tag == f"{{{CT_NS}}}Default":
                     self.defaults[attrs.get("Extension", "").lower()] = attrs.get("ContentType", "")
@@ -142,6 +150,7 @@ class _Inspection:
             self._scan(name, target)
             if target.root_tag != f"{{{REL_NS}}}Relationships":
                 self.findings.append(Finding("invalid_relationships", name))
+                self.scan_complete = False
                 continue
             ids: set[str] = set()
             for tag, attrs in target.elements:
@@ -151,6 +160,7 @@ class _Inspection:
                 rel_id = attrs.get("Id", "")
                 if not raw_target or not rel_id or not attrs.get("Type") or rel_id in ids:
                     self.findings.append(Finding("invalid_relationships", name))
+                    self.scan_complete = False
                     continue
                 ids.add(rel_id)
                 external = attrs.get("TargetMode") == "External"
@@ -158,6 +168,7 @@ class _Inspection:
                     resolved = raw_target if external else resolve_target(source, raw_target)
                 except ValueError as exc:
                     self.findings.append(Finding("invalid_relationships", name, str(exc)))
+                    self.scan_complete = False
                     continue
                 relationship = RelationshipInventory(
                     source, rel_id, attrs["Type"], resolved, external
@@ -202,6 +213,8 @@ class _Inspection:
         }
         if not main_parts:
             self.findings.append(Finding("missing_main_document"))
+            if predicate is not None:
+                self.scan_complete = False
         story_parts = main_parts | {
             rel.target
             for rel in self.relationships
@@ -209,6 +222,8 @@ class _Inspection:
             and relationship_kind(rel.relationship_type) in STORIES
             and not rel.external
         }
+        if predicate is not None and any(name not in self.members for name in story_parts):
+            self.scan_complete = False
         matched = False
         scan_complete = True
         for name in sorted(self.members):
@@ -241,7 +256,7 @@ class _Inspection:
             inventory,
             tuple(self.findings),
             matched,
-            scan_complete and not self.findings,
+            scan_complete and self.scan_complete,
             "query" if predicate is not None else "full",
         )
 

@@ -49,12 +49,21 @@ class DescribeInspection:
             }
         )
         report = inspect(package(parts))
+        assert not report.scan_complete
         assert report.findings_by_code("empty_xml_part")[0].partname == "customXml/item1.xml"
         assert {f.partname for f in report.findings_by_code("unparseable_xml_part")} == {
             "word/broken.xml",
             "word/_rels/document.xml.rels",
         }
         assert {part.partname for part in report.inventory.parts} == set(parts)
+
+    @pytest.mark.parametrize("content", [b"", b" \t\n\r"])
+    def it_marks_a_scan_incomplete_for_an_empty_xml_part(self, content: bytes):
+        parts = members()
+        parts["customXml/item.xml"] = content
+        report = inspect(package(parts))
+        assert [finding.code for finding in report.findings] == ["empty_xml_part"]
+        assert not report.scan_complete
 
     def it_resolves_relationships_and_reachability_without_following_external_uris(self):
         parts = members()
@@ -74,6 +83,7 @@ class DescribeInspection:
             }
         )
         report = inspect(package(parts))
+        assert report.scan_complete
         by_name = {part.partname: part for part in report.inventory.parts}
         assert by_name["word/document.xml"].reachable
         assert by_name["word/media/a b.bin"].reachable
@@ -221,6 +231,15 @@ class DescribeInspection:
 
 
 class DescribeCustomStoryQueries:
+    def it_marks_a_query_incomplete_if_a_reachable_story_is_missing(self):
+        parts = members()
+        parts["word/_rels/document.xml.rels"] = relationships(
+            ("header", "header", "missing-header.xml", False)
+        )
+        report = inspect(package(parts), predicate=lambda event: False)
+        assert report.has_finding("missing_relationship_target")
+        assert not report.scan_complete
+
     def it_stops_on_a_match_and_does_not_claim_complete_validation(self):
         parts = members("<w:p><w:r><w:t>first</w:t></w:r></w:p>")
         parts["word/styles.xml"] = b"<broken>"

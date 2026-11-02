@@ -13,67 +13,14 @@ from zipfile import ZipFile
 
 from lxml import etree
 
+from docx.inspection._structural_xml_tags import STRUCTURAL_XML_TAGS
 from docx.inspection.features import MetadataFacts
 from docx.inspection.reader import CT_NS, REL_NS, is_xml, scan_xml
 from docx.inspection.source import PackageSource, open_source
 
-_WORD_NAMESPACES = (
-    "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
-    "http://purl.oclc.org/ooxml/wordprocessingml/main",
-)
-_STRUCTURAL_WORD_TAGS = frozenset(
-    f"{{{namespace}}}{name}"
-    for namespace in _WORD_NAMESPACES
-    for name in (
-        "document",
-        "body",
-        "hdr",
-        "ftr",
-        "footnotes",
-        "footnote",
-        "endnotes",
-        "endnote",
-        "comments",
-        "comment",
-        "p",
-        "pPr",
-        "r",
-        "rPr",
-        "hyperlink",
-        "tbl",
-        "tblPr",
-        "tblGrid",
-        "tr",
-        "trPr",
-        "tc",
-        "tcPr",
-        "sdt",
-        "sdtContent",
-        "sdtPr",
-        "customXml",
-        "smartTag",
-        "styles",
-        "style",
-        "docDefaults",
-        "rPrDefault",
-        "pPrDefault",
-        "latentStyles",
-        "numbering",
-        "abstractNum",
-        "num",
-        "lvl",
-        "settings",
-        "sectPr",
-        "fonts",
-        "font",
-        "tabs",
-        "tblCellMar",
-        "tcBorders",
-        "tcMar",
-        "compat",
-    )
-)
 _XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
+_XSI_TYPE = "{http://www.w3.org/2001/XMLSchema-instance}type"
+_THEME_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.theme+xml"
 _WORD_CONTENT_TYPE_PREFIXES = (
     "application/vnd.openxmlformats-officedocument.wordprocessingml.",
     "application/vnd.ms-word.",
@@ -102,10 +49,10 @@ class FingerprintPolicy:
     Part patterns match package-relative names using shell-style fnmatch (``*``
     also matches ``/``). XML exclusions use expanded names, e.g. ``{namespace}tag``.
     Relationship exclusions match complete Type URIs. Excluding a part does not
-    implicitly remove its relationships or Content-Type declaration. Known Word
-    structural whitespace is ignored by default; set ignore_structural_whitespace
-    to False to retain it. XML normalization, classification and malformed-XML
-    handling can be customized per part with normalize.
+    implicitly remove its relationships or Content-Type declaration. Whitespace in
+    known schema-derived Word and DrawingML element-only structures is ignored by
+    default; unknown elements retain whitespace. Set ignore_structural_whitespace
+    to False to retain it, or use normalize for custom comparison rules.
     """
 
     exclude_parts: tuple[str, ...] = ()
@@ -138,8 +85,10 @@ def serialize_xml(
     exclude: Callable[[FingerprintItem], bool] | None = None,
 ) -> bytes:
     """Serialize an XML tree after removing blank text and selected subtrees."""
-    parser = etree.XMLParser(remove_blank_text=True, no_network=True)
+    parser = etree.XMLParser(remove_blank_text=True, resolve_entities=False, no_network=True)
     root = etree.fromstring(data, parser)
+    if root.getroottree().docinfo.doctype:
+        raise ValueError("DTDs are not supported in package XML")
 
     def prune(element: Any, ancestors: tuple[str, ...]) -> bool:
         tag = element.tag
@@ -191,10 +140,15 @@ class _CanonicalXml:
         self._ignore_structural_whitespace = bool(
             policy.ignore_structural_whitespace
             and content_type
-            and content_type.startswith(_WORD_CONTENT_TYPE_PREFIXES)
-            and content_type.endswith("+xml")
+            and (
+                content_type == _THEME_CONTENT_TYPE
+                or (
+                    content_type.startswith(_WORD_CONTENT_TYPE_PREFIXES)
+                    and content_type.endswith("+xml")
+                )
+            )
         )
-        self._elements: list[tuple[str, bool]] = []
+        self._elements: list[tuple[str, bool, bool]] = []
 
     def start_ns(self, prefix: str | None, uri: str) -> None:
         if not self._skip_depth:
@@ -242,7 +196,7 @@ class _CanonicalXml:
             inherited = self._elements[-1][1] if self._elements else False
             space = attrs.get(_XML_SPACE)
             preserve = True if space == "preserve" else False if space == "default" else inherited
-            self._elements.append((tag, preserve))
+            self._elements.append((tag, preserve, _XSI_TYPE not in attrs))
             self._writer.start(tag, dict(attrs))
 
     def end(self, tag: str) -> None:
@@ -258,8 +212,9 @@ class _CanonicalXml:
         if (
             self._ignore_structural_whitespace
             and self._elements
-            and self._elements[-1][0] in _STRUCTURAL_WORD_TAGS
+            and self._elements[-1][0] in STRUCTURAL_XML_TAGS
             and not self._elements[-1][1]
+            and self._elements[-1][2]
             and not text.strip(" \t\r\n")
         ):
             return
@@ -304,9 +259,10 @@ def _xml_types(package: ZipFile) -> tuple[dict[str, str], dict[str, str]]:
 def fingerprint(source: PackageSource, *, policy: FingerprintPolicy | None = None) -> str:
     """Return a SHA-256 content fingerprint, ignoring ZIP order and ZIP metadata.
 
-    By default, XML uses C14N 2.0 with comments and ignores whitespace-only text in
-    known Word structural elements unless xml:space preserves it. Other text and
-    namespaces are preserved. This is not a semantic Word diff.
+    By default, XML uses C14N 2.0 with comments and ignores whitespace-only text
+    in a limited set of schema-derived Word, DrawingML, MCE, and WPS structures,
+    unless xml:space preserves it. Other text and namespaces are preserved. This
+    is not a semantic Word diff.
     Malformed XML raises by default; ambiguous duplicate names always raise.
     Stream ownership and position guarantees match inspect().
     """
@@ -318,7 +274,7 @@ def fingerprint(source: PackageSource, *, policy: FingerprintPolicy | None = Non
         xml_types: tuple[dict[str, str], dict[str, str]] | None = (
             _xml_types(package) if policy.canonicalize_xml and policy.normalize is None else None
         )
-        digest = hashlib.sha256(b"python-docx-oss package fingerprint v2\0")
+        digest = hashlib.sha256(b"python-docx-oss package fingerprint v3\0")
         for member in sorted(members, key=lambda member: member.filename):
             name = member.filename
             if any(fnmatchcase(name, pattern) for pattern in policy.exclude_parts) or (

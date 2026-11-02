@@ -22,6 +22,25 @@ def _root(content: bytes, name: str = "word/document.xml") -> etree_Element:
 
 
 class DescribeHyperlinkFieldConversion:
+    def it_does_not_report_textbox_fields_as_outer_paragraph_fields(self):
+        body = (
+            "<w:p><w:r><w:pict><w:txbxContent>"
+            + complex_field()
+            + "</w:txbxContent></w:pict></w:r></w:p>"
+        )
+        result = normalize(package(document_parts(body)), hyperlink_fields=True)
+        assert result.report.succeeded
+        assert result.report.changed
+        assert not result.report.skipped
+        assert len(list(_root(result.content).iter(f"{{{W}}}hyperlink"))) == 1
+
+    def it_reports_fields_wrapped_in_revision_markup_as_skipped(self):
+        body = complex_field().replace("<w:p>", "<w:p><w:ins>").replace("</w:p>", "</w:ins></w:p>")
+        result = normalize(package(document_parts(body)), hyperlink_fields=True)
+        assert result.report.succeeded
+        assert not result.report.changed
+        assert len(result.report.skipped) == 1
+
     def it_preserves_proofing_markers_inside_complex_field_results(self):
         body = complex_field().replace(
             "<w:r><w:rPr><w:i/></w:rPr><w:t>world</w:t></w:r>",

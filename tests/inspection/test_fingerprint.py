@@ -17,6 +17,140 @@ from .helpers import RT, W, members, package, relationships, story
 
 class DescribeFingerprint:
     @pytest.mark.parametrize(
+        "fragment",
+        [
+            "<w:pBdr><w:top/></w:pBdr>",
+            "<w:ins><w:r/></w:ins>",
+            '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+            "<a:graphicData/></a:graphic>",
+            '<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">'
+            "<wp:extent/></wp:inline>",
+            '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'
+            "<pic:nvPicPr/></pic:pic>",
+            '<wps:wsp xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">'
+            "<wps:spPr/></wps:wsp>",
+            '<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">'
+            '<mc:Choice Requires="w"/><mc:Fallback/></mc:AlternateContent>',
+            '<s:p xmlns:s="http://purl.oclc.org/ooxml/wordprocessingml/main"><s:r/></s:p>',
+        ],
+    )
+    def it_ignores_indentation_in_schema_derived_structures(self, fragment: str):
+        parts = members()
+        parts["word/document.xml"] = story(fragment)
+        original = fingerprint(package(parts))
+        parts["word/document.xml"] = story(fragment.replace("><", ">\n  <"))
+        assert fingerprint(package(parts)) == original
+
+    def it_normalizes_known_drawing_structure_in_a_theme_part(self):
+        parts = members()
+        parts["[Content_Types].xml"] = parts["[Content_Types].xml"].replace(
+            b"</Types>",
+            b'<Override PartName="/word/theme/theme1.xml" '
+            b'ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/></Types>',
+        )
+        parts["word/theme/theme1.xml"] = (
+            b'<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+            b"<a:themeElements/></a:theme>"
+        )
+        original = fingerprint(package(parts))
+        parts["word/theme/theme1.xml"] = parts["word/theme/theme1.xml"].replace(b"><", b">\n  <")
+        assert fingerprint(package(parts)) == original
+
+    def it_ignores_structural_whitespace_between_extension_elements(self):
+        parts = members()
+        parts["word/document.xml"] = story('<w:p xmlns:x="urn:example"><x:one/><x:two/></w:p>')
+        original = fingerprint(package(parts))
+        parts["word/document.xml"] = parts["word/document.xml"].replace(b"/><x:two", b"/> <x:two")
+        assert fingerprint(package(parts)) == original
+
+    def it_respects_preserve_and_default_xml_space_on_schema_elements(self):
+        parts = members()
+        parts["word/document.xml"] = story(
+            '<w:p xml:space="preserve"><w:r xml:space="default"><w:rPr/></w:r></w:p>'
+        )
+        original = fingerprint(package(parts))
+        parts["word/document.xml"] = parts["word/document.xml"].replace(
+            b'<w:r xml:space="default">', b'<w:r xml:space="default"> '
+        )
+        assert fingerprint(package(parts)) == original
+        parts["word/document.xml"] = parts["word/document.xml"].replace(
+            b'<w:p xml:space="preserve">', b'<w:p xml:space="preserve"> '
+        )
+        assert fingerprint(package(parts)) != original
+
+    def it_preserves_whitespace_when_xsi_type_overrides_a_known_element(self):
+        parts = members()
+        parts["word/document.xml"] = story(
+            '<w:p xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+            'xmlns:x="urn:example" xsi:type="x:Mixed"><x:b/></w:p>'
+        )
+        original = fingerprint(package(parts))
+        parts["word/document.xml"] = parts["word/document.xml"].replace(b"<x:b/>", b" <x:b/>")
+        assert fingerprint(package(parts)) != original
+
+    @pytest.mark.parametrize(
+        "fragment",
+        [
+            '<v:shape xmlns:v="urn:schemas-microsoft-com:vml"><v:child/></v:shape>',
+            '<w14:shape xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">'
+            "<w14:child/></w14:shape>",
+        ],
+    )
+    def it_preserves_unverified_vml_and_office_extension_whitespace(self, fragment: str):
+        parts = members()
+        parts["word/document.xml"] = story(fragment)
+        original = fingerprint(package(parts))
+        parts["word/document.xml"] = story(fragment.replace("><", "> <"))
+        assert fingerprint(package(parts)) != original
+
+    def it_preserves_large_text_whitespace_across_parser_chunks(self):
+        parts = members()
+        text = "A" * 65530 + " " * 65540 + "B"
+        parts["word/document.xml"] = story(f"<w:p><w:r><w:t>{text}</w:t></w:r></w:p>")
+        original = fingerprint(package(parts))
+        parts["word/document.xml"] = story(
+            f"<w:p><w:r><w:t>{text[:-2] + text[-1:]}</w:t></w:r></w:p>"
+        )
+        assert fingerprint(package(parts)) != original
+
+    @pytest.mark.parametrize(
+        "xml",
+        [
+            b'<!DOCTYPE p [<!ENTITY x "expanded">]><p>&x;</p>',
+            b'<!DOCTYPE p SYSTEM "https://example.invalid/external.dtd"><p/>',
+            b"<!DOCTYPE p><p/>",
+        ],
+    )
+    def it_rejects_dtds_in_the_xml_tree_serializer(self, xml: bytes):
+        with pytest.raises(ValueError, match="DTD"):
+            serialize_xml(xml)
+
+    def it_ignores_indentation_in_additional_word_structures(self):
+        parts = members()
+        parts["word/document.xml"] = story(
+            "<w:p><w:pPr><w:pBdr><w:top/></w:pBdr></w:pPr>"
+            "<w:ins><w:r><w:t>text</w:t></w:r></w:ins></w:p>"
+        )
+        original = fingerprint(package(parts))
+        parts["word/document.xml"] = (
+            parts["word/document.xml"]
+            .replace(b"<w:pBdr>", b"<w:pBdr>\n  ")
+            .replace(b"<w:ins>", b"<w:ins>\n  ")
+        )
+        assert fingerprint(package(parts)) == original
+
+    def it_retains_mixed_extension_whitespace_inside_word_parts(self):
+        parts = members()
+        parts["word/document.xml"] = story(
+            '<w:p><x:p xmlns:x="urn:example"><x:b>A</x:b> <x:b>B</x:b></x:p></w:p>'
+        )
+        original = fingerprint(package(parts))
+        parts["word/document.xml"] = parts["word/document.xml"].replace(
+            b"</x:b> <x:b>", b"</x:b><x:b>"
+        )
+        assert fingerprint(package(parts)) != original
+
+    @pytest.mark.parametrize(
         ("original", "expected"),
         [
             (b"<p>A<drop/>B<keep/>C</p>", b"<p>AB<keep/>C</p>"),

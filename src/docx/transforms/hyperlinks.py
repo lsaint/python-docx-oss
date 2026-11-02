@@ -244,18 +244,25 @@ class HyperlinkNormalizer:
         )
 
     def _convert_complex_fields(self, paragraph: etree_Element) -> None:
+        def nodes_in_paragraph(element: etree_Element, name: str) -> list[etree_Element]:
+            return [
+                node
+                for node in element.iter(w(name))
+                if next(node.iterancestors(w("p")), None) is paragraph
+            ]
+
         children = list(paragraph)
         index = 0
         while index < len(children):
             child = children[index]
-            markers = list(child.iter(w("fldChar")))
+            markers = nodes_in_paragraph(child, "fldChar")
             if not any(marker.get(w("fldCharType")) == "begin" for marker in markers):
                 index += 1
                 continue
             end, depth = index, 0
             found_end = False
             for end in range(index, len(children)):
-                for marker in children[end].iter(w("fldChar")):
+                for marker in nodes_in_paragraph(children[end], "fldChar"):
                     kind = marker.get(w("fldCharType"))
                     depth += (kind == "begin") - (kind == "end")
                 if depth == 0:
@@ -263,7 +270,9 @@ class HyperlinkNormalizer:
                     break
             group = children[index : end + 1]
             instruction_text = "".join(
-                node.text or "" for element in group for node in element.iter(w("instrText"))
+                node.text or ""
+                for element in group
+                for node in nodes_in_paragraph(element, "instrText")
             )
             if instruction_text.lstrip().upper().startswith("HYPERLINK") and (
                 not found_end or not self._convert_group(paragraph, group, instruction_text)

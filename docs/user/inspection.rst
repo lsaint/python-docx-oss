@@ -40,6 +40,12 @@ scanned content; neither an early match nor a query with no findings proves the
 whole package is valid. Predicate exceptions propagate. The source stream is
 never handed to the predicate.
 
+``scan_complete`` describes whether the selected scope was scanned successfully,
+not whether the package is clean. Findings such as a missing relationship target
+can coexist with a complete scan. Empty XML parts cannot be parsed as XML and,
+like unreadable or unparseable parts, make the scan incomplete. Early stops also
+make the scan incomplete. A query is incomplete if a reachable story is missing.
+
 Names are package-relative without a leading slash. The relationship source
 ``/`` denotes the package root. Internal target paths are resolved relative to
 their source, with URI percent escapes decoded. Reachability does not imply
@@ -125,21 +131,29 @@ Content fingerprints
 Member ordering, compression, ZIP timestamps, directory entries, and other ZIP
 metadata do not affect the fingerprint. Member names and contents do. XML uses
 C14N 2.0 with comments, which normalizes attribute ordering, quote style, and
-empty-element spelling. By default, whitespace-only text between children of known
-Word structural elements is ignored. Text elements, mixed Custom XML content, and
-elements under ``xml:space="preserve"`` retain whitespace; unknown elements are
-preserved conservatively. Set ``ignore_structural_whitespace=False`` on the policy
+empty-element spelling. By default, whitespace-only text directly inside known
+element-only Word, DrawingML, MCE, and WordprocessingShape structures is ignored.
+This includes whitespace between extension children of a known structure. Text
+elements, unknown or unverified extension elements, generic Custom XML parts, and
+elements under ``xml:space="preserve"`` retain whitespace. An explicit
+``xml:space="default"`` resets inherited preservation. Elements with an
+``xsi:type`` override are preserved conservatively. Set ``ignore_structural_whitespace=False`` on the policy
 to retain structural whitespace. Namespace prefixes and declarations are preserved,
 including declarations referenced only from attribute values. This rule applies
-only to parts declared with a known WordprocessingML content type, and to specific
-structural elements within them; it does not apply to generic Custom XML parts. It
-assumes those Word elements follow their element-only content model. Raw XML hashing with
+only to parts declared with a known WordprocessingML or DrawingML theme content
+type, and to specific structural elements within them. The generated name list
+comes from ECMA-376 fifth-edition Transitional and Strict schemas, ECMA-376 Part 3
+MCE structures, and Microsoft's MS-ODRAWXML WordprocessingShape schema. It excludes
+ambiguous element names, VML, and unverified extensions. The document is not schema
+validated; this rule assumes the known elements follow their element-only or empty
+content model. Use ``normalize`` for broader application-specific comparison.
+Raw XML hashing with
 ``canonicalize_xml=False`` always preserves the original bytes.
 This is not a semantic Word comparison: equivalent rendering can produce
 different fingerprints. Compare fingerprints with the same policy and API
 algorithm version; the digest is not compatible with arbitrary existing hashes.
-The structural-whitespace change uses fingerprint algorithm version 2, so digest
-strings differ from version 1 even when whitespace handling is disabled.
+The expanded structural-whitespace rules use fingerprint algorithm version 3, so
+digest strings differ from earlier versions even when whitespace handling is disabled.
 
 The optional ``normalize`` callback can replace the bytes hashed for a part::
 
