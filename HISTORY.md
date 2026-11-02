@@ -1,15 +1,18 @@
 ## Release History
 
-**Unreleased**
+**0.5.0 (2026-11-02)**
 
-- Add a callback to exclude package parts or XML subtrees from fingerprints.
-- Add a per-part normalization callback and a reusable XML tree serializer.
-- Preserve following text when excluding elements with the XML tree serializer.
-- Preserve XML namespace declarations when fingerprinting, including namespace
+- Rejected DTDs and entity expansion in XML tree serialization.
+- Distinguished complete scans from clean inspection reports.
+- Kept complex-field detection within its paragraph, including text boxes.
+- Ignored indentation in schema-derived Word and DrawingML structures (fingerprint v3).
+- Added a callback to exclude package parts or XML subtrees from fingerprints.
+- Added a per-part normalization callback and a reusable XML tree serializer.
+- Preserved following text when excluding elements with the XML tree serializer.
+- Preserved XML namespace declarations when fingerprinting, including namespace
   references in attribute values.
-- Ignore formatting whitespace in known Word structural XML elements by default
-  when fingerprinting; preserve text and allow exact structural whitespace comparison.
-
+- Ignored formatting whitespace in known Word structural XML elements by default
+  when fingerprinting, preserving text and allowing exact structural whitespace comparison.
 - Fixed hyperlink field conversion when proofing markers appear in the result.
 - Added streaming story queries with caller-defined predicates and optional early exit.
 - Replaced the fixed hyperlink feature fields with general-purpose scan events.
