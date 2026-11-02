@@ -28,18 +28,18 @@ package inspection, configurable fingerprints, repair, or low-level package and 
 
 | Capability | Status | Primary API |
 | --- | --- | --- |
-| Documents, paragraphs, tables, styles, sections, headers, and footers | Stable | `Document()` and document object APIs |
-| Custom document properties | Stable | `document.custom_properties` |
-| Custom XML lifecycle | Stable | `add_custom_xml_part()`, `delete_custom_xml_part()` |
-| SVG and EMF images | Stable | `add_picture()` |
-| Inline and floating pictures | Stable | `add_picture()`, `add_float_picture()` |
-| Latin and East Asian font controls | Stable | `run.font.name`, `run.font.hAnsi`, `run.font.eastAsia` |
-| Low-level OPC parts and relationships | Stable | `document.part.package`, `part.rels` |
-| In-memory read, export, and independent copies | Stable | `Document()`, `to_bytes()`, `copy()` |
-| Document sanitization | Stable | `document.sanitize()` |
-| Read-only package inspection and streaming feature scanning | Stable | `inspect()`, `ScanEvent` |
-| Configurable package-content fingerprints | Stable | `fingerprint()`, `FingerprintPolicy`, `serialize_xml` |
-| Explicit empty Custom XML repair and hyperlink normalization | Stable | `repair()`, `normalize()` |
+| [Documents, paragraphs, tables, styles, sections, headers, and footers](docs/user/quickstart.rst) | Stable | `Document()` and document object APIs |
+| [Custom document properties](docs/user/custom-properties.rst) | Stable | `document.custom_properties` |
+| [Custom XML lifecycle](docs/user/custom-xml.rst) | Stable | `add_custom_xml_part()`, `delete_custom_xml_part()` |
+| [SVG and EMF images](docs/user/shapes.rst) | Stable | `add_picture()` |
+| [Inline and floating pictures](docs/user/shapes.rst) | Stable | `add_picture()`, `add_float_picture()` |
+| [Latin and East Asian font controls](docs/user/text.rst) | Stable | `run.font.name`, `run.font.hAnsi`, `run.font.eastAsia` |
+| [Low-level OPC parts and relationships](docs/user/api-concepts.rst) | Stable | `document.part.package`, `part.rels` |
+| [In-memory read, export, and independent copies](docs/user/documents.rst) | Stable | `Document()`, `to_bytes()`, `copy()` |
+| [Document sanitization](docs/user/sanitization.rst) | Stable | `document.sanitize()` |
+| [Read-only package inspection and streaming feature scanning](docs/user/inspection.rst) | Stable | `inspect()`, `ScanEvent` |
+| [Configurable package-content fingerprints](docs/user/inspection.rst#content-fingerprints) | Stable | `fingerprint()`, `FingerprintPolicy`, `serialize_xml` |
+| [Explicit empty Custom XML repair and hyperlink normalization](docs/user/transformations.rst) | Stable | `repair()`, `normalize()` |
 | Package and semantic diff | Planned | — |
 
 ## Installation
@@ -92,42 +92,25 @@ document.save("output.docx")
 
 ### Package inspection and fingerprints
 
-Inspect damaged documents before opening them, stream story elements with caller predicates,
-and compute reproducible content fingerprints without loading media payloads:
+Inspect damaged documents before opening them, and compute reproducible content fingerprints
+without loading media payloads:
 
 ```python
-from docx import FingerprintItem, FingerprintPolicy, fingerprint, inspect
+from docx import FingerprintPolicy, fingerprint, inspect
 
-# 1. Structural inspection and finding detection
 report = inspect("input.docx")
 for finding in report.findings:
     print(finding.code, finding.partname)
 
-# 2. Streaming story query with early exit
-def find_bookmark(event):
-    return event.kind == "start" and event.tag.endswith("}bookmarkStart")
-
-query = inspect("input.docx", predicate=find_bookmark, stop_on_match=True)
-if query.matched:
-    print("Found bookmark; scan complete:", query.scan_complete)
-
-# 3. Content fingerprints with part and native XML exclusions
-def exclude_item(item: FingerprintItem) -> bool:
-    if item.kind == "part":
-        return item.part_name.startswith("docProps/")
-    return item.tag == "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}bookmarkStart"
-
-policy = FingerprintPolicy(exclude=exclude_item)
-digest = fingerprint("input.docx", policy=policy)
+digest = fingerprint("input.docx", policy=FingerprintPolicy(exclude_parts=("docProps/*",)))
 ```
 
-These APIs leave inputs unchanged and restore seekable stream positions. `inspect()` can
-inventory package members, detect structural damage, or stream story XML elements using
-caller-defined predicates without loading media payloads. Fingerprints ignore ZIP metadata
-and member ordering, ignore indentation in schema-derived Word and DrawingML structures
-via C14N 2.0 (fingerprint v3), and support selective part and XML element exclusions.
-See [Package inspection and fingerprints](docs/user/inspection.rst) for finding codes,
-XML comparison semantics, and policy rules.
+These APIs leave inputs unchanged and restore seekable stream positions without loading
+media payloads. `inspect()` supports structural inventory, damage detection, and streaming
+story XML queries with caller-defined predicates. `fingerprint()` normalizes structural
+indentation (C14N 2.0 / fingerprint v3) and supports selective exclusions. See
+[Package inspection and fingerprints](docs/user/inspection.rst) for finding codes, streaming
+queries, and policy rules.
 
 ### Explicit repair and normalization
 
@@ -136,19 +119,14 @@ from docx import normalize, repair
 
 repaired = repair(source_bytes, empty_custom_xml=True)
 if repaired.report.succeeded:
-    normalized = normalize(
-        repaired.content,
-        hyperlink_fields=True,
-        hyperlink_runs=True,
-    )
+    normalized = normalize(repaired.content, hyperlink_fields=True, hyperlink_runs=True)
     if normalized.report.succeeded:
         output_bytes = normalized.content
 ```
 
 Operations are disabled by default and transactional: validation failures return the
-original bytes. Hyperlink normalization safely converts simple or complex fields while
-isolating text box boundaries, preserving proofing markers, and supporting caller
-selection callbacks (`select_hyperlink`). See
+original bytes. Hyperlink normalization converts field codes into native `w:hyperlink`
+elements while preserving text box boundaries and proofing markers. See
 [Repair and normalization](docs/user/transformations.rst) for supported structures,
 selection callbacks, and preservation rules.
 
