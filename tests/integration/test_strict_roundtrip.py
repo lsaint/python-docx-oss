@@ -4,8 +4,13 @@ from __future__ import annotations
 
 import io
 import zipfile
+from pathlib import Path
+
+import pytest
+from lxml import etree
 
 from docx import Document
+from docx.enum.shape import WD_INLINE_SHAPE
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import Pt
 
@@ -110,3 +115,72 @@ class DescribeStrictDocxRoundTrip:
             doc_xml = z.read("word/document.xml")
             assert b'w:conformance="transitional"' in doc_xml
             assert b'w:conformance="strict"' not in doc_xml
+
+    @pytest.mark.parametrize("encoding", ["UTF-8", "UTF-16", "UTF-16LE", "UTF-16BE"])
+    def it_round_trips_alternate_prefixes_encodings_and_user_uris(self, encoding: str):
+        uri = "http://purl.oclc.org/ooxml/wordprocessingml/main"
+        source = _make_minimal_strict_docx()
+        encoded = io.BytesIO()
+        with zipfile.ZipFile(source) as src, zipfile.ZipFile(encoded, "w") as dst:
+            for name in src.namelist():
+                blob = src.read(name)
+                if name == "word/document.xml":
+                    blob = blob.replace(b"w:", b"x:").replace(b"xmlns:w=", b"xmlns:x=")
+                    blob = blob.replace(b"Strict Paragraph", uri.encode())
+                root = etree.fromstring(blob)
+                dst.writestr(name, etree.tostring(root, encoding=encoding, xml_declaration=True))
+        encoded.seek(0)
+        doc = Document(encoded)
+        assert doc.paragraphs[0].text == uri
+        output = io.BytesIO()
+        doc.save(output)
+        output.seek(0)
+        assert Document(output).paragraphs[0].text == uri
+        with zipfile.ZipFile(output) as saved:
+            root = etree.fromstring(saved.read("word/document.xml"))
+            assert (
+                root.get(
+                    "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}conformance"
+                )
+                == "transitional"
+            )
+
+    def it_recognizes_strict_pictures_after_open_and_save(self):
+        doc = Document()
+        doc.add_picture(
+            str(Path(__file__).parents[2] / "features" / "steps" / "test_files" / "test.png")
+        )
+        transitional = io.BytesIO()
+        doc.save(transitional)
+        transitional.seek(0)
+        strict = io.BytesIO()
+        with zipfile.ZipFile(transitional) as src, zipfile.ZipFile(strict, "w") as dst:
+            for name in src.namelist():
+                blob = src.read(name)
+                if name.endswith((".xml", ".rels")):
+                    blob = (
+                        blob.replace(
+                            b"http://schemas.openxmlformats.org/drawingml/2006/",
+                            b"http://purl.oclc.org/ooxml/drawingml/",
+                        )
+                        .replace(
+                            b"http://schemas.openxmlformats.org/wordprocessingml/2006/",
+                            b"http://purl.oclc.org/ooxml/wordprocessingml/",
+                        )
+                        .replace(
+                            b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/",
+                            b"http://purl.oclc.org/ooxml/officeDocument/relationships/",
+                        )
+                    )
+                dst.writestr(name, blob)
+        strict.seek(0)
+        opened = Document(strict)
+        assert opened.inline_shapes[0].type == WD_INLINE_SHAPE.PICTURE
+        saved = io.BytesIO()
+        opened.save(saved)
+        saved.seek(0)
+        assert Document(saved).inline_shapes[0].type == WD_INLINE_SHAPE.PICTURE
+        with zipfile.ZipFile(saved) as package:
+            xml = package.read("word/document.xml")
+            assert b'uri="http://schemas.openxmlformats.org/drawingml/2006/picture"' in xml
+            assert b"http://purl.oclc.org/ooxml/drawingml/picture" not in xml

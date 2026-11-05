@@ -81,7 +81,7 @@ class ParagraphFormat(ElementProxy):
         self._element.get_or_add_pPr().keepNext_val = value
 
     @property
-    def left_indent(self):
+    def left_indent(self) -> Length | None:
         """|Length| value specifying the space between the left margin and the left side
         of the paragraph.
 
@@ -95,7 +95,7 @@ class ParagraphFormat(ElementProxy):
         return pPr.ind_left
 
     @left_indent.setter
-    def left_indent(self, value):
+    def left_indent(self, value: Length | None) -> None:
         pPr = self._element.get_or_add_pPr()
         pPr.ind_left = value
 
@@ -176,7 +176,7 @@ class ParagraphFormat(ElementProxy):
         self._element.get_or_add_pPr().pageBreakBefore_val = value
 
     @property
-    def right_indent(self):
+    def right_indent(self) -> Length | None:
         """|Length| value specifying the space between the right margin and the right
         side of the paragraph.
 
@@ -190,7 +190,7 @@ class ParagraphFormat(ElementProxy):
         return pPr.ind_right
 
     @right_indent.setter
-    def right_indent(self, value):
+    def right_indent(self, value: Length | None) -> None:
         pPr = self._element.get_or_add_pPr()
         pPr.ind_right = value
 

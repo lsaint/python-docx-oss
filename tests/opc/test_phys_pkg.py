@@ -5,6 +5,7 @@ import io
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
+from lxml import etree
 
 from docx.opc.exceptions import PackageNotFoundError
 from docx.opc.packuri import PACKAGE_URI, PackURI
@@ -242,3 +243,120 @@ class DescribeNormalizeStrictBlob:
         normalized = _normalize_strict_blob(pack_uri, blob)
         assert b"http://schemas.openxmlformats.org/officeDocument/2006/math" in normalized
         assert b"http://schemas.openxmlformats.org/officeDocument/2006/bibliography" in normalized
+
+    @pytest.mark.parametrize("encoding", ["utf-8", "utf-16", "utf-16-le", "utf-16-be"])
+    def it_preserves_user_data_while_converting_names(self, encoding: str):
+        uri = "http://purl.oclc.org/ooxml/wordprocessingml/main"
+        xml = (
+            f'<?xml version="1.0" encoding="{encoding}"?>'
+            f'<x:document xmlns:x="{uri}" x:conformance = "strict">'
+            f"<x:body><x:p><x:r><x:t>{uri}</x:t></x:r></x:p></x:body>"
+            f'<data xmlns="urn:user" value="{uri}">{uri}</data>'
+            "</x:document>"
+        )
+        root = etree.fromstring(
+            _normalize_strict_blob(PackURI("/word/document.xml"), xml.encode(encoding))
+        )
+        w = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        assert root.tag == w + "document"
+        assert root.get(w + "conformance") == "transitional"
+        text = root.find(".//" + w + "t")
+        assert text is not None
+        assert text.text == uri
+        data = root.find("{urn:user}data")
+        assert data is not None
+        assert data.text == data.get("value") == uri
+
+    def it_preserves_relationship_targets(self):
+        uri = "http://purl.oclc.org/ooxml/officeDocument/relationships/hyperlink"
+        blob = (
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            f'<Relationship Id="rId1" Type="{uri}" Target="{uri}" TargetMode="External"/>'
+            "</Relationships>"
+        ).encode()
+        root = etree.fromstring(_normalize_strict_blob(PackURI("/_rels/.rels"), blob))
+        assert root[0].get("Target") == uri
+        assert root[0].get("Type") == (
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+        )
+
+    def it_leaves_transitional_user_uris_untouched(self):
+        blob = (
+            b'<data value="http://purl.oclc.org/ooxml/officeDocument/math">'
+            b"http://purl.oclc.org/ooxml/wordprocessingml/main</data>"
+        )
+        assert _normalize_strict_blob(PackURI("/customXml/item1.xml"), blob) == blob
+
+    def it_preserves_unused_namespace_bindings_comments_and_processing_instructions(self):
+        blob = (
+            b"<?before keep?><!--before-->"
+            b'<x:document xmlns:x="http://purl.oclc.org/ooxml/wordprocessingml/main" '
+            b'xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" '
+            b'xmlns:extra="urn:extra" mc:Ignorable="extra">'
+            b"<!--inside--><?inside keep?></x:document><!--after--><?after keep?>"
+        )
+        normalized = _normalize_strict_blob(PackURI("/word/document.xml"), blob)
+        root = etree.fromstring(normalized)
+        assert root.nsmap["extra"] == "urn:extra"
+        assert (
+            root.get("{http://schemas.openxmlformats.org/markup-compatibility/2006}Ignorable")
+            == "extra"
+        )
+        for marker in (
+            b"<?before keep?>",
+            b"<!--before-->",
+            b"<!--inside-->",
+            b"<?inside keep?>",
+            b"<!--after-->",
+            b"<?after keep?>",
+        ):
+            assert marker in normalized
+        assert normalized.index(b"<?before keep?>") < normalized.index(b"<!--before-->")
+        assert normalized.index(b"<!--after-->") < normalized.index(b"<?after keep?>")
+
+    def it_preserves_comments_cdata_and_original_formatting(self):
+        uri = b"http://purl.oclc.org/ooxml/drawingml/picture"
+        fake = b'<a:graphicData uri="' + uri + b'"/>'
+        blob = (
+            b"<?xml version='1.0' encoding='UTF-8'?>\r\n"
+            b"<a:graphicData xmlns:a = 'http://purl.oclc.org/ooxml/drawingml/main'\n"
+            b" uri = '" + uri + b"' data='&gt;'>"
+            b"<!--" + fake + b"--><![CDATA[" + fake + b"]]>"
+            b"<?keep " + fake + b"?>"
+            b"</a:graphicData>"
+        )
+        expected = blob.replace(
+            b"http://purl.oclc.org/ooxml/drawingml/main",
+            b"http://schemas.openxmlformats.org/drawingml/2006/main",
+        ).replace(
+            b"uri = '" + uri + b"'",
+            b"uri = 'http://schemas.openxmlformats.org/drawingml/2006/picture'",
+        )
+        assert _normalize_strict_blob(PackURI("/word/header1.xml"), blob) == expected
+
+    def it_respects_namespace_scopes_for_semantic_attributes(self):
+        uri = "http://purl.oclc.org/ooxml/drawingml/picture"
+        blob = (
+            '<root xmlns:a="http://purl.oclc.org/ooxml/drawingml/main">'
+            f'<a:graphicData uri="{uri}"/>'
+            f'<a:graphicData xmlns:a="urn:user" uri="{uri}"/>'
+            f'<a:graphicData uri="{uri}"/>'
+            "</root>"
+        ).encode()
+        root = etree.fromstring(_normalize_strict_blob(PackURI("/word/header1.xml"), blob))
+        assert (
+            root[0].get("uri")
+            == root[2].get("uri")
+            == ("http://schemas.openxmlformats.org/drawingml/2006/picture")
+        )
+        assert root[1].get("uri") == uri
+
+    @pytest.mark.parametrize(
+        "blob",
+        [
+            b'<data xmlns="http://purl.oclc.org/ooxml/wordprocessingml/main">',
+            b"not xml http://purl.oclc.org/ooxml/wordprocessingml/main",
+        ],
+    )
+    def it_passes_malformed_opaque_parts_through(self, blob: bytes):
+        assert _normalize_strict_blob(PackURI("/customXml/item1.xml"), blob) == blob
