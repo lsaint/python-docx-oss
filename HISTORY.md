@@ -1,5 +1,20 @@
 ## Release History
 
+**0.5.1 (2026-11-05)**
+
+- Added transparent physical package normalization to open and read ISO/IEC 29500
+  Strict Open XML documents without altering original content, user text, target
+  references, or Custom XML parts.
+- Mapped Strict DrawingML picture namespaces and normalized conformance markers
+  to Transitional on physical package reads.
+- Added support for universal measurement and percentage strings (e.g. `231.60pt`,
+  `25%`) in table cell widths via `ST_MeasurementOrPercent`.
+- Added support for reading paragraph logical indentation (`w:start` and `w:end`)
+  with automatic fallback to `w:left` and `w:right`, and cleared conflicting logical
+  indents on write.
+- Supported logical alignment values (`start` and `end`) in paragraph and table
+  alignment enumerations.
+
 **0.5.0 (2026-11-02)**
 
 - Rejected DTDs and entity expansion in XML tree serialization.

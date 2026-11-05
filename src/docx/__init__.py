@@ -15,7 +15,7 @@ from docx.transforms import normalize, repair
 if TYPE_CHECKING:
     from docx.opc.part import Part
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 
 __all__ = [
