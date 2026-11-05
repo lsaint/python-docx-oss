@@ -12,6 +12,7 @@ from docx.opc.phys_pkg import (
     PhysPkgReader,
     PhysPkgWriter,
     _DirPkgReader,
+    _normalize_strict_blob,
     _ZipPkgReader,
     _ZipPkgWriter,
 )
@@ -180,3 +181,48 @@ def tmp_docx_path(tmpdir):
 @pytest.fixture
 def ZipFile_(request):
     return class_mock(request, "docx.opc.phys_pkg.ZipFile")
+
+
+class DescribeNormalizeStrictBlob:
+    def it_leaves_non_xml_blobs_untouched(self):
+        pack_uri = PackURI("/word/media/image1.png")
+        blob = b"fake-png-content-http://purl.oclc.org/ooxml/officeDocument"
+        assert _normalize_strict_blob(pack_uri, blob) == blob
+
+    def it_leaves_transitional_xml_untouched(self):
+        pack_uri = PackURI("/word/document.xml")
+        blob = (
+            b'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>'
+        )
+        assert _normalize_strict_blob(pack_uri, blob) == blob
+
+    def it_normalizes_strict_namespaces_to_transitional(self):
+        pack_uri = PackURI("/_rels/.rels")
+        blob = (
+            b'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            b'<Relationship Id="rId1" '
+            b'Type="http://purl.oclc.org/ooxml/officeDocument/relationships/officeDocument" '
+            b'Target="word/document.xml"/>'
+            b'<Relationship Id="rId2" '
+            b'Type="http://purl.oclc.org/ooxml/officeDocument/relationships/extendedProperties" '
+            b'Target="docProps/app.xml"/>'
+            b"</Relationships>"
+        )
+        normalized = _normalize_strict_blob(pack_uri, blob)
+        assert (
+            b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
+            in normalized
+        )
+        assert (
+            b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties"
+            in normalized
+        )
+        assert b"http://purl.oclc.org/ooxml" not in normalized
+
+    def it_normalizes_strict_wordprocessingml_parts(self):
+        pack_uri = PackURI("/word/document.xml")
+        blob = b'<w:document xmlns:w="http://purl.oclc.org/ooxml/wordprocessingml/main"><w:body/></w:document>'
+        normalized = _normalize_strict_blob(pack_uri, blob)
+        assert (
+            b'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"' in normalized
+        )

@@ -6,6 +6,85 @@ from zipfile import ZIP_DEFLATED, ZipFile, is_zipfile
 from docx.opc.exceptions import PackageNotFoundError
 from docx.opc.packuri import CONTENT_TYPES_URI
 
+_STRICT_TO_TRANSITIONAL_MAPPINGS = (
+    # Relationships with hyphen differences in transitional:
+    (
+        b"http://purl.oclc.org/ooxml/officeDocument/relationships/extendedProperties",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/officeDocument/relationships/customProperties",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties",
+    ),
+    # General relationships:
+    (
+        b"http://purl.oclc.org/ooxml/officeDocument/relationships/",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/officeDocument/relationships",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+    ),
+    # Document properties:
+    (
+        b"http://purl.oclc.org/ooxml/officeDocument/extendedProperties",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/officeDocument/customProperties",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/custom-properties",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/officeDocument/customXml",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/customXml",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/officeDocument/docPropsVTypes",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/officeDocument/math",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/math",
+    ),
+    # Core domain namespaces:
+    (
+        b"http://purl.oclc.org/ooxml/wordprocessingml/",
+        b"http://schemas.openxmlformats.org/wordprocessingml/2006/",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/drawingml/",
+        b"http://schemas.openxmlformats.org/drawingml/2006/",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/spreadsheetml/",
+        b"http://schemas.openxmlformats.org/spreadsheetml/2006/",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/presentationml/",
+        b"http://schemas.openxmlformats.org/presentationml/2006/",
+    ),
+    (
+        b"http://purl.oclc.org/ooxml/schemaLibrary/",
+        b"http://schemas.openxmlformats.org/schemaLibrary/2006/",
+    ),
+)
+
+
+def _normalize_strict_blob(pack_uri, blob):
+    """Normalize ISO/IEC 29500 Strict Open XML namespaces to Transitional.
+
+    If an XML or relationship blob contains Strict namespaces under
+    'purl.oclc.org/ooxml', convert them to standard Transitional namespaces so
+    the package parts and relationships can be processed uniformly.
+    """
+    if not pack_uri.membername.endswith((".xml", ".rels")):
+        return blob
+    if b"http://purl.oclc.org/ooxml/" not in blob:
+        return blob
+    for strict_ns, trans_ns in _STRICT_TO_TRANSITIONAL_MAPPINGS:
+        blob = blob.replace(strict_ns, trans_ns)
+    return blob
+
 
 class PhysPkgReader:
     """Factory for physical package reader objects."""
@@ -46,7 +125,7 @@ class _DirPkgReader(PhysPkgReader):
         path = os.path.join(self._path, pack_uri.membername)
         with open(path, "rb") as f:
             blob = f.read()
-        return blob
+        return _normalize_strict_blob(pack_uri, blob)
 
     def close(self):
         """Provides interface consistency with |ZipFileSystem|, but does nothing, a
@@ -80,7 +159,7 @@ class _ZipPkgReader(PhysPkgReader):
 
         Raises |ValueError| if no matching member is present in zip archive.
         """
-        return self._zipf.read(pack_uri.membername)
+        return _normalize_strict_blob(pack_uri, self._zipf.read(pack_uri.membername))
 
     def close(self):
         """Close the zip archive, releasing any resources it is using."""
