@@ -425,6 +425,7 @@ class Describe_Cell:
             ("w:tc/w:tcPr", None),
             ("w:tc/w:tcPr/w:tcW{w:w=25%,w:type=pct}", None),
             ("w:tc/w:tcPr/w:tcW{w:w=1440,w:type=dxa}", 914400),
+            ("w:tc/w:tcPr/w:tcW{w:w=231.60pt,w:type=dxa}", 2941320),
         ],
     )
     def it_knows_its_width_in_EMU(self, tc_cxml: str, expected_value: int | None, parent_: Mock):
@@ -439,6 +440,11 @@ class Describe_Cell:
                 "w:tc/w:tcPr/w:tcW{w:w=25%,w:type=pct}",
                 Inches(2),
                 "w:tc/w:tcPr/w:tcW{w:w=2880,w:type=dxa}",
+            ),
+            (
+                "w:tc/w:tcPr/w:tcW{w:w=231.60pt,w:type=dxa}",
+                Inches(1),
+                "w:tc/w:tcPr/w:tcW{w:w=1440,w:type=dxa}",
             ),
         ],
     )

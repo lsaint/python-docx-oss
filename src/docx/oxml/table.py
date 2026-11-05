@@ -26,7 +26,7 @@ from docx.oxml.xmlchemy import (
     ZeroOrMore,
     ZeroOrOne,
 )
-from docx.shared import Emu, Length, Twips
+from docx.shared import Emu, Length
 
 if TYPE_CHECKING:
     from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -410,11 +410,7 @@ class CT_TblWidth(BaseOxmlElement):
         if self.type != "dxa":
             return None
         w = self.w
-        if isinstance(w, Length):
-            return w
-        if isinstance(w, int):
-            return Twips(w)
-        return None
+        return w if isinstance(w, Length) else None
 
     @width.setter
     def width(self, value: Length):

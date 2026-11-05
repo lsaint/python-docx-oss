@@ -4,7 +4,7 @@ import os
 from zipfile import ZIP_DEFLATED, ZipFile, is_zipfile
 
 from docx.opc.exceptions import PackageNotFoundError
-from docx.opc.packuri import CONTENT_TYPES_URI
+from docx.opc.packuri import CONTENT_TYPES_URI, PackURI
 
 _STRICT_TO_TRANSITIONAL_MAPPINGS = (
     # Hyphenated differences in Transitional relationships and parts:
@@ -53,7 +53,7 @@ _STRICT_TO_TRANSITIONAL_MAPPINGS = (
 )
 
 
-def _normalize_strict_blob(pack_uri, blob):
+def _normalize_strict_blob(pack_uri: PackURI, blob: bytes) -> bytes:
     """Normalize ISO/IEC 29500 Strict Open XML namespaces to Transitional.
 
     If an XML or relationship blob contains Strict namespaces under
