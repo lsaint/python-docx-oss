@@ -424,6 +424,29 @@ class ST_UniversalMeasure(BaseSimpleType):
         return Emu(int(round(quantity * multiplier)))
 
 
+class ST_MeasurementOrPercent(BaseSimpleType):
+    """Corresponds to ST_MeasurementOrPercent in WML.
+
+    Can be a universal measure (e.g. '231.60pt'), an integer or float string
+    interpreted as twips (e.g. '1440'), or a percentage string (e.g. '25%').
+    """
+
+    @classmethod
+    def convert_from_xml(cls, str_value: str) -> Length | str:
+        if str_value.endswith("%"):
+            return str_value
+        if any(unit in str_value for unit in ("mm", "cm", "in", "pt", "pc", "pi")):
+            return ST_UniversalMeasure.convert_from_xml(str_value)
+        return Twips(int(round(float(str_value))))
+
+    @classmethod
+    def convert_to_xml(cls, value: int | Length | str) -> str:
+        if isinstance(value, str):
+            return value
+        emu = Emu(value)
+        return str(emu.twips)
+
+
 class ST_VerticalAlignRun(XsdStringEnumeration):
     """Valid values for `w:vertAlign/@val`."""
 

@@ -29,6 +29,12 @@ if TYPE_CHECKING:
 class CT_Ind(BaseOxmlElement):
     """``<w:ind>`` element, specifying paragraph indentation."""
 
+    start: Length | None = OptionalAttribute(  # pyright: ignore[reportAssignmentType]
+        "w:start", ST_SignedTwipsMeasure
+    )
+    end: Length | None = OptionalAttribute(  # pyright: ignore[reportAssignmentType]
+        "w:end", ST_SignedTwipsMeasure
+    )
     left: Length | None = OptionalAttribute(  # pyright: ignore[reportAssignmentType]
         "w:left", ST_SignedTwipsMeasure
     )
@@ -152,10 +158,12 @@ class CT_PPr(BaseOxmlElement):
 
     @property
     def ind_left(self) -> Length | None:
-        """The value of `w:ind/@w:left` or |None| if not present."""
+        """The value of `w:ind/@w:start` or `w:ind/@w:left` or |None| if not present."""
         ind = self.ind
         if ind is None:
             return None
+        if ind.start is not None:
+            return ind.start
         return ind.left
 
     @ind_left.setter
@@ -164,13 +172,17 @@ class CT_PPr(BaseOxmlElement):
             return
         ind = self.get_or_add_ind()
         ind.left = value
+        if ind.start is not None:
+            ind.start = None
 
     @property
     def ind_right(self) -> Length | None:
-        """The value of `w:ind/@w:right` or |None| if not present."""
+        """The value of `w:ind/@w:end` or `w:ind/@w:right` or |None| if not present."""
         ind = self.ind
         if ind is None:
             return None
+        if ind.end is not None:
+            return ind.end
         return ind.right
 
     @ind_right.setter
@@ -179,6 +191,8 @@ class CT_PPr(BaseOxmlElement):
             return
         ind = self.get_or_add_ind()
         ind.right = value
+        if ind.end is not None:
+            ind.end = None
 
     @property
     def jc_val(self) -> WD_ALIGN_PARAGRAPH | None:

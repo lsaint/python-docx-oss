@@ -19,13 +19,11 @@ from docx.inspection.result import (
     RelationshipInventory,
 )
 from docx.inspection.source import PackageSource, open_source
+from docx.opc.constants import STRICT_REL_BASE, TRANSITIONAL_REL_BASE
 
 CT_NS = "http://schemas.openxmlformats.org/package/2006/content-types"
 REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
-OFFICE_REL_BASES = (
-    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/",
-    "http://purl.oclc.org/ooxml/officeDocument/relationships/",
-)
+OFFICE_REL_BASES = (TRANSITIONAL_REL_BASE, STRICT_REL_BASE)
 PACKAGE_ERRORS = (
     BadZipFile,
     EOFError,

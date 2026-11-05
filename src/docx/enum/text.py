@@ -63,6 +63,14 @@ class WD_PARAGRAPH_ALIGNMENT(BaseXmlEnum):
     )
     """Justified according to Thai formatting layout."""
 
+    @classmethod
+    def from_xml(cls, xml_value: str | None) -> WD_PARAGRAPH_ALIGNMENT:
+        if xml_value == "start":
+            return cls.LEFT
+        if xml_value == "end":
+            return cls.RIGHT
+        return super().from_xml(xml_value)
+
 
 WD_ALIGN_PARAGRAPH = WD_PARAGRAPH_ALIGNMENT
 

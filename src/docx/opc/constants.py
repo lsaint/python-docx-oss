@@ -305,3 +305,7 @@ class RELATIONSHIP_TYPE:
         "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheetSource"
     )
     XML_MAPS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/xmlMaps"
+
+
+TRANSITIONAL_REL_BASE = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/"
+STRICT_REL_BASE = "http://purl.oclc.org/ooxml/officeDocument/relationships/"

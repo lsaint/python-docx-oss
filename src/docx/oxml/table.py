@@ -10,11 +10,11 @@ from docx.oxml.ns import nsdecls, qn
 from docx.oxml.parser import parse_xml
 from docx.oxml.shared import CT_DecimalNumber
 from docx.oxml.simpletypes import (
+    ST_MeasurementOrPercent,
     ST_Merge,
     ST_TblLayoutType,
     ST_TblWidth,
     ST_TwipsMeasure,
-    XsdInt,
 )
 from docx.oxml.text.paragraph import CT_P
 from docx.oxml.xmlchemy import (
@@ -399,10 +399,9 @@ class CT_TblPrEx(BaseOxmlElement):
 class CT_TblWidth(BaseOxmlElement):
     """Used for `w:tblW` and `w:tcW` and others, specifies a table-related width."""
 
-    # the type for `w` attr is actually ST_MeasurementOrPercent, but using
-    # XsdInt for now because only dxa (twips) values are being used. It's not
-    # entirely clear what the semantics are for other values like -01.4mm
-    w: int = RequiredAttribute("w:w", XsdInt)  # pyright: ignore[reportAssignmentType]
+    w: Length | str = RequiredAttribute(  # pyright: ignore[reportAssignmentType]
+        "w:w", ST_MeasurementOrPercent
+    )
     type = RequiredAttribute("w:type", ST_TblWidth)
 
     @property
@@ -410,12 +409,17 @@ class CT_TblWidth(BaseOxmlElement):
         """EMU length indicated by the combined `w:w` and `w:type` attrs."""
         if self.type != "dxa":
             return None
-        return Twips(self.w)
+        w = self.w
+        if isinstance(w, Length):
+            return w
+        if isinstance(w, int):
+            return Twips(w)
+        return None
 
     @width.setter
     def width(self, value: Length):
         self.type = "dxa"
-        self.w = Emu(value).twips
+        self.w = value
 
 
 class CT_Tc(BaseOxmlElement):

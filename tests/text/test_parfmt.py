@@ -178,6 +178,7 @@ class DescribeParagraphFormat:
             ("w:p/w:pPr/w:ind", None),
             ("w:p/w:pPr/w:ind{w:left=120}", Pt(6)),
             ("w:p/w:pPr/w:ind{w:left=-06.3pt}", Pt(-6.3)),
+            ("w:p/w:pPr/w:ind{w:start=720}", Pt(36)),
         ]
     )
     def left_indent_get_fixture(self, request):
@@ -192,6 +193,7 @@ class DescribeParagraphFormat:
             ("w:p", 0, "w:p/w:pPr/w:ind{w:left=0}"),
             ("w:p", None, "w:p/w:pPr"),
             ("w:p/w:pPr/w:ind{w:left=240}", None, "w:p/w:pPr/w:ind"),
+            ("w:p/w:pPr/w:ind{w:start=720}", Pt(18), "w:p/w:pPr/w:ind{w:left=360}"),
         ]
     )
     def left_indent_set_fixture(self, request):
@@ -376,6 +378,7 @@ class DescribeParagraphFormat:
             ("w:p/w:pPr/w:ind", None),
             ("w:p/w:pPr/w:ind{w:right=160}", Pt(8)),
             ("w:p/w:pPr/w:ind{w:right=-4.2pt}", Pt(-4.2)),
+            ("w:p/w:pPr/w:ind{w:end=720}", Pt(36)),
         ]
     )
     def right_indent_get_fixture(self, request):
@@ -390,6 +393,7 @@ class DescribeParagraphFormat:
             ("w:p", 0, "w:p/w:pPr/w:ind{w:right=0}"),
             ("w:p", None, "w:p/w:pPr"),
             ("w:p/w:pPr/w:ind{w:right=240}", None, "w:p/w:pPr/w:ind"),
+            ("w:p/w:pPr/w:ind{w:end=720}", Pt(18), "w:p/w:pPr/w:ind{w:right=360}"),
         ]
     )
     def right_indent_set_fixture(self, request):

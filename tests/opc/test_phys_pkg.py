@@ -221,8 +221,24 @@ class DescribeNormalizeStrictBlob:
 
     def it_normalizes_strict_wordprocessingml_parts(self):
         pack_uri = PackURI("/word/document.xml")
-        blob = b'<w:document xmlns:w="http://purl.oclc.org/ooxml/wordprocessingml/main"><w:body/></w:document>'
+        blob = (
+            b'<w:document xmlns:w="http://purl.oclc.org/ooxml/wordprocessingml/main" '
+            b'w:conformance="strict"><w:body/></w:document>'
+        )
         normalized = _normalize_strict_blob(pack_uri, blob)
         assert (
             b'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"' in normalized
         )
+        assert b'w:conformance="transitional"' in normalized
+        assert b'w:conformance="strict"' not in normalized
+
+    def it_normalizes_general_officedocument_namespaces(self):
+        pack_uri = PackURI("/word/document.xml")
+        blob = (
+            b'<w:document xmlns:w="http://purl.oclc.org/ooxml/wordprocessingml/main" '
+            b'xmlns:m="http://purl.oclc.org/ooxml/officeDocument/math" '
+            b'xmlns:b="http://purl.oclc.org/ooxml/officeDocument/bibliography"/>'
+        )
+        normalized = _normalize_strict_blob(pack_uri, blob)
+        assert b"http://schemas.openxmlformats.org/officeDocument/2006/math" in normalized
+        assert b"http://schemas.openxmlformats.org/officeDocument/2006/bibliography" in normalized

@@ -10,6 +10,8 @@ import enum
 import pytest
 
 from docx.enum.base import BaseXmlEnum
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 
 class SomeXmlAttr(BaseXmlEnum):
@@ -90,3 +92,17 @@ class DescribeBaseXmlEnumMembers:
         assert SomeXmlAttr.FOO != 2
         assert SomeXmlAttr.BAR == 2
         assert SomeXmlAttr.BAR != 1
+
+
+class DescribeAlignmentAliases:
+    """Unit-test suite for 'start' and 'end' alignment mapping."""
+
+    def it_maps_start_and_end_for_paragraph_alignment(self):
+        assert WD_PARAGRAPH_ALIGNMENT.from_xml("start") == WD_PARAGRAPH_ALIGNMENT.LEFT
+        assert WD_PARAGRAPH_ALIGNMENT.from_xml("end") == WD_PARAGRAPH_ALIGNMENT.RIGHT
+        assert WD_PARAGRAPH_ALIGNMENT.from_xml("center") == WD_PARAGRAPH_ALIGNMENT.CENTER
+
+    def it_maps_start_and_end_for_table_alignment(self):
+        assert WD_TABLE_ALIGNMENT.from_xml("start") == WD_TABLE_ALIGNMENT.LEFT
+        assert WD_TABLE_ALIGNMENT.from_xml("end") == WD_TABLE_ALIGNMENT.RIGHT
+        assert WD_TABLE_ALIGNMENT.from_xml("center") == WD_TABLE_ALIGNMENT.CENTER

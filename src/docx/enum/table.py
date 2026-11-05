@@ -1,5 +1,7 @@
 """Enumerations related to tables in WordprocessingML files."""
 
+from __future__ import annotations
+
 from docx.enum.base import BaseEnum, BaseXmlEnum
 
 
@@ -105,6 +107,14 @@ class WD_TABLE_ALIGNMENT(BaseXmlEnum):
 
     RIGHT = (2, "right", "Right-aligned.")
     """Right-aligned."""
+
+    @classmethod
+    def from_xml(cls, xml_value: str | None) -> WD_TABLE_ALIGNMENT:
+        if xml_value == "start":
+            return cls.LEFT
+        if xml_value == "end":
+            return cls.RIGHT
+        return super().from_xml(xml_value)
 
 
 class WD_TABLE_DIRECTION(BaseEnum):

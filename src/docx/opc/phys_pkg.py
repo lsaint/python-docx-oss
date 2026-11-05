@@ -7,7 +7,7 @@ from docx.opc.exceptions import PackageNotFoundError
 from docx.opc.packuri import CONTENT_TYPES_URI
 
 _STRICT_TO_TRANSITIONAL_MAPPINGS = (
-    # Relationships with hyphen differences in transitional:
+    # Hyphenated differences in Transitional relationships and parts:
     (
         b"http://purl.oclc.org/ooxml/officeDocument/relationships/extendedProperties",
         b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties",
@@ -16,16 +16,6 @@ _STRICT_TO_TRANSITIONAL_MAPPINGS = (
         b"http://purl.oclc.org/ooxml/officeDocument/relationships/customProperties",
         b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties",
     ),
-    # General relationships:
-    (
-        b"http://purl.oclc.org/ooxml/officeDocument/relationships/",
-        b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/",
-    ),
-    (
-        b"http://purl.oclc.org/ooxml/officeDocument/relationships",
-        b"http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-    ),
-    # Document properties:
     (
         b"http://purl.oclc.org/ooxml/officeDocument/extendedProperties",
         b"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties",
@@ -34,19 +24,12 @@ _STRICT_TO_TRANSITIONAL_MAPPINGS = (
         b"http://purl.oclc.org/ooxml/officeDocument/customProperties",
         b"http://schemas.openxmlformats.org/officeDocument/2006/custom-properties",
     ),
+    # General officeDocument rule (covers relationships, math, customXml, etc.):
     (
-        b"http://purl.oclc.org/ooxml/officeDocument/customXml",
-        b"http://schemas.openxmlformats.org/officeDocument/2006/customXml",
+        b"http://purl.oclc.org/ooxml/officeDocument/",
+        b"http://schemas.openxmlformats.org/officeDocument/2006/",
     ),
-    (
-        b"http://purl.oclc.org/ooxml/officeDocument/docPropsVTypes",
-        b"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes",
-    ),
-    (
-        b"http://purl.oclc.org/ooxml/officeDocument/math",
-        b"http://schemas.openxmlformats.org/officeDocument/2006/math",
-    ),
-    # Core domain namespaces:
+    # Domain packages:
     (
         b"http://purl.oclc.org/ooxml/wordprocessingml/",
         b"http://schemas.openxmlformats.org/wordprocessingml/2006/",
@@ -76,6 +59,15 @@ def _normalize_strict_blob(pack_uri, blob):
     If an XML or relationship blob contains Strict namespaces under
     'purl.oclc.org/ooxml', convert them to standard Transitional namespaces so
     the package parts and relationships can be processed uniformly.
+
+    Limitations and Edge Cases:
+    1. Byte substring replacement: If document user text or Custom XML data
+       coincidentally contains the exact PURL URI string, it will also be
+       replaced.
+    2. Encoding: Assumes UTF-8/ASCII XML encoding (the OOXML standard default).
+       UTF-16 encoded XML parts are not matched by ASCII byte patterns.
+    3. Part filtering: Triggered by filename extensions ('.xml', '.rels') rather
+       than inspecting MIME Content-Types.
     """
     if not pack_uri.membername.endswith((".xml", ".rels")):
         return blob
@@ -83,6 +75,10 @@ def _normalize_strict_blob(pack_uri, blob):
         return blob
     for strict_ns, trans_ns in _STRICT_TO_TRANSITIONAL_MAPPINGS:
         blob = blob.replace(strict_ns, trans_ns)
+    if b'w:conformance="strict"' in blob:
+        blob = blob.replace(b'w:conformance="strict"', b'w:conformance="transitional"')
+    elif b"w:conformance='strict'" in blob:
+        blob = blob.replace(b"w:conformance='strict'", b"w:conformance='transitional'")
     return blob
 
 
