@@ -42,7 +42,7 @@ package inspection, configurable fingerprints, repair, or low-level package and 
 | [Read-only package inspection and streaming feature scanning](docs/user/inspection.rst) | `inspect()`, `ScanEvent` |
 | [Configurable package-content fingerprints](docs/user/inspection.rst#content-fingerprints) | `fingerprint()`, `FingerprintPolicy`, `serialize_xml` |
 | [Explicit empty Custom XML repair and hyperlink normalization](docs/user/transformations.rst) | `repair()`, `normalize()` |
-| **— Major fixes and compatibility —** | **—** |
+| **Major fixes and compatibility** | |
 | [Strict Open XML compatibility](HISTORY.md#release-history) | Open Strict documents through `Document()` with transparent package normalization |
 | [Table width and logical layout compatibility](HISTORY.md#release-history) | Read measurement and percentage widths, logical indentation, and `start` / `end` alignment |
 | [lxml text extraction](docs/user/compatibility.rst#preservation-of-lxml-element-text-and-itertext-semantics) | Prevent duplicate `itertext()` output; preserve public `.text` APIs |
@@ -64,33 +64,23 @@ from docx import Document
 > `python-docx` and `python-docx-oss` provide the same `docx` import namespace. Do not
 > install both distributions in the same Python environment.
 
-`python-docx-oss` currently supports Python 3.12, 3.13, and 3.14.
-
 ## Quick Start
 
-Create a document entirely in memory:
+Prepare a sharing copy with custom metadata, East Asian fonts, and a content fingerprint:
 
 ```python
-from io import BytesIO
+from docx import Document, fingerprint
 
-from docx import Document
+internal = Document("internal-report.docx")
+public = internal.copy()  # Keep the original unchanged.
 
-document = Document()
-document.add_heading("Quarterly Report", level=1)
-document.add_paragraph("Generated entirely in memory.")
+public.custom_properties["distribution"] = "public"  # Set document metadata.
+public.part.add_custom_xml_part('<report xmlns="urn:example:reports" id="Q4"/>')
+public.add_paragraph().add_run("中文内容").font.eastAsia = "Microsoft YaHei"
 
-output = BytesIO()
-document.save(output)
-
-docx_bytes = output.getvalue()
-```
-
-The same APIs also accept filesystem paths:
-
-```python
-document = Document("input.docx")
-document.add_paragraph("Appended by python-docx-oss.")
-document.save("output.docx")
+public.sanitize(personal_metadata=True, comments=True)  # Remove private info.
+content = public.to_bytes()  # Export without temporary files.
+digest = fingerprint(content)  # Compute a normalized package-content fingerprint.
 ```
 
 ## Compatibility and Scope
@@ -105,20 +95,10 @@ document.save("output.docx")
 - CLI, MCP, web, desktop, and Agent runtimes belong in separate packages that consume
   this SDK.
 
-## Credits
-
-This project builds on the original work of
-[`python-docx`](https://github.com/python-openxml/python-docx) creator Steve Canny and
-its contributors. `python-docx-oss` is maintained by Ethan St Lee and its contributors.
-
 ## Why “OSS”?
 
 In Brazilian jiu-jitsu, “oss” is a greeting and an expression of respect. It reflects
 the same spirit of discipline and collaboration behind this project.
-
-## License
-
-`python-docx-oss` is released under the [MIT License](LICENSE).
 
 ## Support
 
