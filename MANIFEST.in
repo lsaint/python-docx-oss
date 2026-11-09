@@ -1,4 +1,4 @@
-include HISTORY.md LICENSE README.md tox.ini
+include HISTORY.md LICENSE README.md
 include requirements*.txt
 graft src/docx/templates
 graft features
