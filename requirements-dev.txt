@@ -3,5 +3,4 @@ build
 ruff
 setuptools>=61.0.0
 tox
-twine
 types-lxml

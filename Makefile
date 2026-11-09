@@ -1,13 +1,11 @@
 BEHAVE = behave
 MAKE   = make
 PYTHON = python
-TWINE  = $(PYTHON) -m twine
 VERSION := $(shell sed -n 's/^__version__ = "\(.*\)"/\1/p' src/docx/__init__.py)
 SDIST  = dist/python_docx_oss-$(VERSION).tar.gz
 WHEEL  = dist/python_docx_oss-$(VERSION)-py3-none-any.whl
 
-.PHONY: accept build clean cleandocs coverage docs install opendocs sdist test
-.PHONY: test-upload upload verify-release wheel
+.PHONY: accept build clean cleandocs coverage docs install opendocs sdist test wheel
 
 help:
 	@echo "Please use \`make <target>' where <target> is one or more of"
@@ -18,11 +16,8 @@ help:
 	@echo "  coverage     run pytest with coverage"
 	@echo "  docs         generate documentation"
 	@echo "  opendocs     open browser to local version of documentation"
-	@echo "  register     update metadata (README.rst) on PyPI"
 	@echo "  sdist        generate a source distribution into dist/"
 	@echo "  test         run unit tests using pytest"
-	@echo "  test-upload  upload distribution to TestPyPI"
-	@echo "  upload       upload distribution tarball to PyPI"
 	@echo "  wheel        generate a binary distribution into dist/"
 
 accept:
@@ -56,21 +51,6 @@ sdist:
 
 test:
 	uv run pytest -x
-
-test-upload: clean sdist wheel
-	uv run $(TWINE) check $(WHEEL) $(SDIST)
-	uv run $(TWINE) upload --repository testpypi $(WHEEL) $(SDIST)
-
-upload: verify-release
-	$(MAKE) clean
-	$(MAKE) sdist wheel
-	uv run $(TWINE) check $(WHEEL) $(SDIST)
-	uv run $(TWINE) upload $(WHEEL) $(SDIST)
-
-verify-release:
-	test -n "$(VERSION)"
-	test "$$(git rev-parse HEAD)" = "$$(git rev-parse v$(VERSION)^{})"
-	test -z "$$(git status --short)"
 
 wheel:
 	uv build --wheel
