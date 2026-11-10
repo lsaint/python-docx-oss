@@ -86,7 +86,15 @@ markers within the result remain in their original order.
 
 Supported targets include quoted or unquoted addresses, bookmark-only links,
 and address plus bookmark. Supported switches are ``\l`` (anchor), ``\o``
-(tooltip), ``\t`` (target frame), and ``\* MERGEFORMAT``. Unknown switches,
+(tooltip), ``\t`` (target frame), ``\h`` (disable visited-link history), and
+``\* MERGEFORMAT``. The Word-specific, argument-free ``\h`` switch is preserved
+as ``w:history="false"`` on the resulting hyperlink. Microsoft documents ``\h``
+as preventing the target from being added to the viewed-hyperlink list in
+`MS-OE376, section 2.1.509 <https://learn.microsoft.com/en-us/openspecs/office_standards/ms-oe376/233c2d46-107d-4881-86bf-c5f61f9c2a60>`_.
+The `Open XML SDK history attribute documentation <https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.hyperlink.history>`_
+defines ``w:history`` as adding the target to that list.
+Bookmark-only links with ``\h`` do not create external hyperlink relationships.
+Unknown switches,
 locked or nested fields, revision markup, mixed delimiter/content runs, and
 bookmark or comment range boundaries are left unchanged and reported. Other
 field types, such as TOC and REF, are untouched.

@@ -76,6 +76,7 @@ class DescribeHyperlinkFieldConversion:
         root = _root(result.content)
         links = list(root.iter(f"{{{W}}}hyperlink"))
         assert len(links) == 1
+        assert links[0].get(f"{{{W}}}history") is None
         assert not list(root.iter(f"{{{W}}}fldChar"))
         assert not list(root.iter(f"{{{W}}}instrText"))
         runs = links[0].findall(f"{{{W}}}r")
@@ -163,6 +164,115 @@ class DescribeHyperlinkFieldConversion:
         link = next(_root(result.content).iter(f"{{{W}}}hyperlink"))
         assert link.get(f"{{{W}}}tooltip") == "A tooltip"
         assert link.get(f"{{{W}}}tgtFrame") == "_blank"
+
+    @pytest.mark.parametrize("simple", [False, True])
+    @pytest.mark.parametrize(
+        ("switches", "anchor", "tooltip", "frame"),
+        [
+            (r"\h", None, None, None),
+            (r"\H", None, None, None),
+            (r'\h \l "Chapter1" \o "A tooltip" \t "_blank"', "Chapter1", "A tooltip", "_blank"),
+            (r'\l "Chapter1" \h \* MERGEFORMAT', "Chapter1", None, None),
+        ],
+    )
+    def it_preserves_the_h_switch_without_changing_target_text_or_formatting(
+        self,
+        simple: bool,
+        switches: str,
+        anchor: str | None,
+        tooltip: str | None,
+        frame: str | None,
+    ) -> None:
+        instruction = f'HYPERLINK "https://example.test/doc" {switches}'
+        body = complex_field(instruction)
+        if simple:
+            body = (
+                f"<w:p><w:fldSimple w:instr='{instruction}'>"
+                '<w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">Hello </w:t></w:r>'
+                "<w:r><w:rPr><w:i/></w:rPr><w:t>world</w:t></w:r>"
+                "</w:fldSimple></w:p>"
+            )
+        result = normalize(package(document_parts(body)), hyperlink_fields=True)
+        assert result.report.succeeded
+        assert result.report.changed
+        assert not result.report.skipped
+        root = _root(result.content)
+        link = next(root.iter(f"{{{W}}}hyperlink"))
+        assert link.get(f"{{{W}}}history") == "false"
+        assert link.get(f"{{{W}}}anchor") == anchor
+        assert link.get(f"{{{W}}}tooltip") == tooltip
+        assert link.get(f"{{{W}}}tgtFrame") == frame
+        assert not list(root.iter(f"{{{W}}}instrText"))
+        assert not list(root.iter(f"{{{W}}}fldChar"))
+        assert not list(root.iter(f"{{{W}}}fldSimple"))
+        runs = link.findall(f"{{{W}}}r")
+        assert len(runs) == 2
+        assert runs[0].find(f"{{{W}}}rPr/{{{W}}}b") is not None
+        assert runs[1].find(f"{{{W}}}rPr/{{{W}}}i") is not None
+        assert Document(result.content).paragraphs[0].hyperlinks[0].text == "Hello world"
+        rels = _root(result.content, "word/_rels/document.xml.rels")
+        assert any(
+            rel.get("Id") == link.get(f"{{{REL_ATTR}}}id")
+            and rel.get("Target") == "https://example.test/doc"
+            and rel.get("TargetMode") == "External"
+            for rel in rels
+        )
+        again = normalize(result.content, hyperlink_fields=True)
+        assert again.report.succeeded
+        assert not again.report.changed
+        assert again.content == result.content
+
+    @pytest.mark.parametrize("simple", [False, True])
+    @pytest.mark.parametrize(
+        "instruction", [r'HYPERLINK \l "_Toc123" \h', r'HYPERLINK \h \l "_Toc123"']
+    )
+    def it_converts_anchor_only_h_switch_fields_without_adding_relationships(
+        self, simple: bool, instruction: str
+    ) -> None:
+        body = complex_field(instruction)
+        if simple:
+            body = (
+                f"<w:p><w:fldSimple w:instr='{instruction}'>"
+                "<w:r><w:t>Hello world</w:t></w:r></w:fldSimple></w:p>"
+            )
+        content = package(document_parts(body))
+        result = normalize(content, hyperlink_fields=True)
+        assert result.report.succeeded
+        assert result.report.changed
+        assert not result.report.skipped
+        link = next(_root(result.content).iter(f"{{{W}}}hyperlink"))
+        assert link.get(f"{{{W}}}anchor") == "_Toc123"
+        assert link.get(f"{{{W}}}history") == "false"
+        assert link.get(f"{{{REL_ATTR}}}id") is None
+        assert Document(result.content).paragraphs[0].hyperlinks[0].text == "Hello world"
+        assert not any(
+            change.code == "added_hyperlink_relationship" for change in result.report.changes
+        )
+        rels_name = "word/_rels/document.xml.rels"
+        assert unzip(result.content)[rels_name] == unzip(content)[rels_name]
+        again = normalize(result.content, hyperlink_fields=True)
+        assert not again.report.changed
+        assert again.content == result.content
+
+    @pytest.mark.parametrize("simple", [False, True])
+    @pytest.mark.parametrize(
+        "switches",
+        [r"\h value", r"\h \h", r"\h \H", r"\h \unknown", r"\o \h"],
+    )
+    def it_skips_invalid_h_switch_combinations(self, simple: bool, switches: str) -> None:
+        instruction = f'HYPERLINK "https://example.test/doc" {switches}'
+        body = complex_field(instruction)
+        if simple:
+            body = (
+                f"<w:p><w:fldSimple w:instr='{instruction}'>"
+                "<w:r><w:t>label</w:t></w:r></w:fldSimple></w:p>"
+            )
+        content = package(document_parts(body))
+        result = normalize(content, hyperlink_fields=True)
+        assert result.report.succeeded
+        assert result.report.skipped
+        assert not result.report.changed
+        assert result.content is content
 
     def it_converts_simple_fields(self):
         body = "<w:p><w:fldSimple w:instr='HYPERLINK \"https://example.test\"'><w:r><w:t>label</w:t></w:r></w:fldSimple></w:p>"

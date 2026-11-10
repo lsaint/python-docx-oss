@@ -1,5 +1,15 @@
 ## Release History
 
+**Unreleased**
+
+- Fixed `normalize(..., hyperlink_fields=True)` skipping Word `HYPERLINK` fields
+  containing the argument-free `\h` switch. Simple and paragraph-local complex
+  fields now convert to `w:hyperlink` with `w:history="false"`, preserving the
+  switch's documented behavior and retaining link targets, text, and formatting.
+- Supported bookmark-only fields such as `HYPERLINK \l "_Toc123" \h` without
+  creating external hyperlink relationships. Duplicate switches and malformed
+  arguments remain unchanged and are reported as skipped.
+
 **0.5.1 (2026-11-05)**
 
 - Added transparent physical package normalization to open and read ISO/IEC 29500

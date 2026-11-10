@@ -17,6 +17,8 @@ W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 Selector = Callable[[HyperlinkTarget], bool]
+_ARGUMENT_SWITCHES = frozenset((r"\l", r"\o", r"\t", r"\*"))
+_SUPPORTED_SWITCHES = _ARGUMENT_SWITCHES | {r"\h"}
 
 
 def w(name: str) -> str:
@@ -29,6 +31,7 @@ class _Instruction:
     anchor: str | None
     tooltip: str | None = None
     frame: str | None = None
+    has_h_switch: bool = False
 
 
 def _instruction(text: str) -> _Instruction | None:
@@ -41,13 +44,19 @@ def _instruction(text: str) -> _Instruction | None:
         address = tokens[index][0]
         index += 1
     options: dict[str, str] = {}
+    has_h_switch = False
     while index < len(tokens):
         key, quoted = tokens[index]
         key = key.lower()
         index += 1
+        if key == "\\h" and not quoted:
+            if has_h_switch:
+                return None
+            has_h_switch = True
+            continue
         if (
             quoted
-            or key not in ("\\l", "\\o", "\\t", "\\*")
+            or key not in _ARGUMENT_SWITCHES
             or index == len(tokens)
             or not tokens[index][1]
             and tokens[index][0].startswith("\\")
@@ -61,7 +70,13 @@ def _instruction(text: str) -> _Instruction | None:
     anchor = options.get("\\l")
     if not address and not anchor:
         return None
-    return _Instruction(address or None, anchor, options.get("\\o"), options.get("\\t"))
+    return _Instruction(
+        address or None,
+        anchor,
+        options.get("\\o"),
+        options.get("\\t"),
+        has_h_switch=has_h_switch,
+    )
 
 
 def _field_tokens(text: str) -> list[tuple[str, bool]] | None:
@@ -96,7 +111,7 @@ def _field_tokens(text: str) -> list[tuple[str, bool]] | None:
             while index < len(text) and not text[index].isspace():
                 index += 1
             token = text[start:index]
-            if '"' in token or "\\" in token and token.lower() not in ("\\l", "\\o", "\\t", "\\*"):
+            if '"' in token or "\\" in token and token.lower() not in _SUPPORTED_SWITCHES:
                 return None
             tokens.append((token, False))
     return tokens
@@ -176,6 +191,8 @@ class HyperlinkNormalizer:
         ):
             if value is not None:
                 link.set(w(name), value)
+        if instruction.has_h_switch:
+            link.set(w("history"), "false")
         return link
 
     def _protected(self, element: etree_Element) -> bool:
