@@ -1,6 +1,6 @@
 ## Release History
 
-**Unreleased**
+**0.5.2 (2026-11-23)**
 
 - Fixed `normalize(..., hyperlink_fields=True)` skipping Word `HYPERLINK` fields
   containing the argument-free `\h` switch. Simple and paragraph-local complex
